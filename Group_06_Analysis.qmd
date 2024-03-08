@@ -1,0 +1,36 @@
+---
+title: "Group_06_Analysis"
+author: "Group 06"
+number-sections: true
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+  pdf: default
+editor_options: 
+  chunk_output_type: console
+execute:
+  echo: false
+  eval: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: libraries
+library(ggplot2)
+library(tidyverse)
+library(gt)
+library(patchwork)
+library(gridExtra)
+library(moderndive)
+```
+
+
+# Introduction {#sec-Intro}
+
+# Exploratory Data Analysis {#sec-EDA}
+
+# Formal Data Analysis {#sec-FDA}
+
+# Conclusions {#sec-Conc}
