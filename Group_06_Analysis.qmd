@@ -24,12 +24,51 @@ library(gt)
 library(patchwork)
 library(gridExtra)
 library(moderndive)
+library(MASS)
+library(knitr)
+library(GGally)
 ```
 
 
 # Introduction {#sec-Intro}
 
+
+```{r}
+# Import the data sets
+imdb_data <- read.csv("dataset06.csv")
+glimpse(imdb_data)
+```
+
+# Data Wrangling Methods {#sec-DW}
+Before we begin the analysis of our data, let's transform the data using various tools.The process below describes the detailed data wrangling techniques that are used to get the desired data set.
+```{r}
+# Since genre is of type character, we convert it to factor
+imdb_data$genre <- as.factor(imdb_data$genre)
+```
+
+As per the research question, 'rating' is converted to a binary variable taking 1 or 0 values.
+```{r}
+#new binary column#
+imdb_data$high_rating <- ifelse(imdb_data$rating >= 7, 1, 0)
+```
+
+A check for missing values was conducted and it was found that 103 observation were missing from the column length. Impute missing values with the median since median is a robust measure i.e not impacted by outliers as much as mean
+```{r}
+# Check for missing values
+missing_values <- sum(is.na(imdb_data$length)) #103 values
+colSums(is.na(imdb_data)) #103 observations are missing in 'length'
+
+# Impute missing values with the median 
+median_length <- median(imdb_data$length, na.rm = TRUE)
+imdb_data$length[is.na(imdb_data$length)] <- median_length
+```
+
 # Exploratory Data Analysis {#sec-EDA}
+
+```{r}
+
+```
+
 
 # Formal Data Analysis {#sec-FDA}
 
