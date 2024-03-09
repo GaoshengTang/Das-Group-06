@@ -66,9 +66,67 @@ imdb_data$length[is.na(imdb_data$length)] <- median_length
 # Exploratory Data Analysis {#sec-EDA}
 
 ```{r}
-
+#| label: fig-plot1
+#| fig-cap: boxplot of length
+#| fig-width: 4
+#| fig-height: 5
+#| fig-align: center
+#| message: false
+#Add a binary variable as a column
+imdb_data$rate<- ifelse(imdb_data$rating >= 7, "high rating(>=7)", "low rating(<7)")
+#boxplot
+ggplot(data = imdb_data, aes(x = rate, y = length,fill=rate) )+
+  geom_boxplot() +
+  labs(x = "rating", y = "length")
 ```
+@fig-plot1 shows that the median film length of high rating films is less than that of low rating films. Interquartile Range of low rating is smaller than that of high rating, which shows that the data about low rating is more concentrated.
 
+```{r}
+#| label: table1
+#| tbl-cap: Summary statistics on hlength.
+table=imdb_data %>%
+  group_by(rate) %>%
+  summarise('Mean' = mean(length),
+            'Median' = median(length),
+            'St.Dev' = sd(length),
+            'Min' = min(length),
+            'Max' = max(length),
+            'IQR' = quantile(length,0.75)-quantile(length,0.25),
+            'Sample_size' = n())
+
+table|>
+  gt() |>
+  fmt_number(decimals=2) |>
+  cols_label(
+    Mean = html("Mean"),
+    Median = html("Median"),
+    St.Dev = html("Std. Dev"),
+    Min = html("Minimum"),
+    Max = html("Maximum"),
+    IQR = html("Interquartile Range"),
+    Sample_size = html("Sample Size")
+  )
+```
+@table1 shows that the size of the film with low rating is  more than twice as many as that with high rating.  The mean length film with high rating(57.95) is lower than that with low rating(95.80).On the whole, highly rated films have a low parity of length phrases. But a low rated films is more stable.
+
+```{r}
+##glm
+#select the variables of interest from the evals data set:
+library(dplyr)
+imdb_length<-imdb_data %>%
+             dplyr::select(length,high_rating)
+
+#use generalised linear model function glm to fit a logistic
+model <- glm(high_rating ~ length, data = imdb_length, 
+             family = binomial(link = "logit"))
+
+#summary produced from our logistic regression model
+#model %>%
+#  summary()
+
+library("jtools")
+summ(model)
+```
 
 # Formal Data Analysis {#sec-FDA}
 
