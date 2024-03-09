@@ -64,7 +64,7 @@ imdb_data$length[is.na(imdb_data$length)] <- median_length
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
-
+##property1: length
 ```{r}
 #| label: fig-plot1
 #| fig-cap: boxplot of length
@@ -109,24 +109,48 @@ table|>
 ```
 @table1 shows that the size of the film with low rating is  more than twice as many as that with high rating.  The mean length film with high rating(57.95) is lower than that with low rating(95.80).On the whole, highly rated films have a low parity of length phrases. But a low rated films is more stable.
 
+##property2:budget((in $1000000s)
+
 ```{r}
-##glm
-#select the variables of interest from the evals data set:
-library(dplyr)
-imdb_length<-imdb_data %>%
-             dplyr::select(length,high_rating)
-
-#use generalised linear model function glm to fit a logistic
-model <- glm(high_rating ~ length, data = imdb_length, 
-             family = binomial(link = "logit"))
-
-#summary produced from our logistic regression model
-#model %>%
-#  summary()
-
-library("jtools")
-summ(model)
+#| label: fig-plot2
+#| fig-cap: boxplot of budget
+#| fig-width: 4
+#| fig-height: 5
+#| fig-align: center
+#| message: false
+#boxplot
+ggplot(data = imdb_data, aes(x = rate, y = budget,fill=rate) )+
+  geom_boxplot() +
+  labs(x = "rating", y = "budget")
 ```
+@fig-plot2 shows that the median budget film  of high rating films is higher than that of low rating films. 
+
+```{r}
+#| label: table2
+#| tbl-cap: Summary statistics on budget.
+table=imdb_data %>%
+  group_by(rate) %>%
+  summarise('Mean' = mean(budget),
+            'Median' = median(budget),
+            'St.Dev' = sd(budget),
+            'Min' = min(budget),
+            'Max' = max(budget),
+            'IQR' = quantile(budget,0.75)-quantile(budget,0.25),
+            'Sample_size' = n())
+
+table|>
+  gt() |>
+  fmt_number(decimals=2) |>
+  cols_label(
+    Median = html("Median"),
+    St.Dev = html("Std. Dev"),
+    Min = html("Minimum"),
+    Max = html("Maximum"),
+    IQR = html("Interquartile Range"),
+    Sample_size = html("Sample Size")
+  )
+```
+@table2 shows that the  mean budget film with high rating(13.09 in $1000000s) is higher than that with low rating(11.51 in $1000000s).And ehe  median budget film with high rating(13.00 in $1000000s) is higher than that with low rating(11.50 in $1000000s).In general, films with high rating have higher budgets than movies with low rating.
 
 # Formal Data Analysis {#sec-FDA}
 
