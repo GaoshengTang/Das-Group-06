@@ -33,7 +33,6 @@ library(GGally)
 
 # Introduction {#sec-Intro}
 
-
 ```{r}
 # Import the data sets
 imdb_data <- read.csv("dataset06.csv")
@@ -65,11 +64,9 @@ imdb_data$length[is.na(imdb_data$length)] <- median_length
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
-## scatterplot
 
 Let's have a look at the first five rows of the data frame
 ```{r}
-<<<<<<< Updated upstream
 #| label: fig-plot1
 #| fig-cap: scatterplot matrix with ggpairs
 #| fig-align: center
@@ -78,10 +75,7 @@ Let's have a look at the first five rows of the data frame
 imdb_data <- imdb_data %>%
   mutate(log_votes = log(votes))
 
-imdb_data <- imdb_data %>%
-  mutate(log_length = log(length))
-
-ggpairs(imdb_data_numeric[, c("year", "budget", "rating","length","log_length","votes","log_votes")], 
+ggpairs(imdb_data[, c("year", "budget", "rating","length","length","votes","votes")], 
                               title="Scatterplot matrix")
 ```
 
@@ -249,7 +243,7 @@ g + geom_bar(aes(fill = rate))
 ```
 
 @fig-plot5 shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
-=======
+```{r}
 imdb_data |>
   slice_head(n=5) |>
   gt() |>
