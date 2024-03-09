@@ -6,7 +6,8 @@ format:
   html:
     embed-resources: true
     code-tools: true
-  pdf: default
+  pdf: 
+   geometry: "left=2cm, right=2cm, top=2cm, bottom=2cm"
 editor_options: 
   chunk_output_type: console
 execute:
@@ -66,7 +67,9 @@ imdb_data$length[is.na(imdb_data$length)] <- median_length
 # Exploratory Data Analysis {#sec-EDA}
 ## scatterplot
 
+Let's have a look at the first five rows of the data frame
 ```{r}
+<<<<<<< Updated upstream
 #| label: fig-plot1
 #| fig-cap: scatterplot matrix with ggpairs
 #| fig-align: center
@@ -246,6 +249,147 @@ g + geom_bar(aes(fill = rate))
 ```
 
 @fig-plot5 shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
+=======
+imdb_data |>
+  slice_head(n=5) |>
+  gt() |>
+  fmt_number(decimals=2)
+```
+
+## Summary Statistics {#sec-sum}
+```{r}
+summary(imdb_data)
+```
+
+## Correlation {#sec-cor}
+Scatter plot Matrix shows very low correlation between categorical variables
+```{r}
+scatterplot_matrix <- ggpairs(imdb_data[, c("year", "budget", "rating", "length", "votes")], 
+                              title="Scatterplot matrix")
+scatterplot_matrix
+```
+## Visualization {#sec-viz}
+
+Histograms to understand the data structures of different variables
+
+```{r}
+#DATA STRUCTURES#
+#Histograms for statistical distribution#
+year_plot <- ggplot(data=imdb_data, mapping=aes(x=year))+
+  geom_histogram(color="red")
+
+length_plot <- ggplot(data=imdb_data, mapping=aes(x=length))+
+  geom_histogram(color="blue")
+
+budget_plot <- ggplot(data=imdb_data, mapping=aes(x=budget))+
+  geom_histogram(color="green")
+
+votes_plot <- ggplot(data=imdb_data, mapping=aes(x=votes))+
+  geom_histogram(color="yellow")
+
+log_votes_plot <- ggplot(data=imdb_data, mapping=aes(x=log(votes)))+
+  geom_histogram(color="yellow")
+
+rating_plot <- ggplot(data=imdb_data, mapping=aes(x=rating))+
+  geom_histogram(color="skyblue")
+
+grid.arrange(year_plot,budget_plot,votes_plot, log_votes_plot,
+             length_plot,rating_plot, ncol=2)
+```
+
+Based on the results above the following transformations are done
+```{r}
+#Add a new column#
+imdb_data <- imdb_data %>%
+  mutate(log_votes = log(votes))
+```
+
+Scatterplots to understand the relationship of Response variable with numerical explanatory variables
+```{r}
+s1 <- ggplot(data=imdb_data, aes(x = year, y = rating, color=genre))+
+  geom_point()
+
+s2 <- ggplot(data=imdb_data, aes(x = length, y = rating, color=genre))+
+  geom_point()
+
+s3 <- ggplot(data=imdb_data, aes(x = budget, y = rating, color=genre))+
+  geom_point()
+
+s4 <- ggplot(data=imdb_data, aes(x = log_votes , y = rating, color=genre))+
+  geom_point()
+grid.arrange(s1, s2, s3, s4, ncol=2)
+```
+
+
+## Boxplots {#sec-box}
+
+The boxplots are created to understand various numerical variables individual and to explore if the categorical variable 'genre' has an impact on it
+```{r}
+year_outliers <- imdb_data %>%
+  group_by(genre) %>%
+  mutate(is_outlier = year > quantile(year, 0.75) + 1.5 * IQR(year) |
+           year < quantile(year, 0.25) - 1.5 * IQR(year)) %>%
+  filter(is_outlier) %>%
+  ungroup() # 14 outliers
+p1 <- ggplot(imdb_data, aes(x = genre, y = year))+
+  geom_boxplot(fill=c("red", "green", "yellow", "blue", "pink", "white", "lightblue"))
+p1
+```
+Comment on boxplot above median along with outliers
+
+```{r}
+length_outliers <- imdb_data %>%
+  group_by(genre) %>%
+  mutate(is_outlier = length > quantile(length, 0.75) + 1.5 * IQR(length) |
+           length < quantile(length, 0.25) - 1.5 * IQR(length)) %>%
+  filter(is_outlier) %>%
+  ungroup() #207 outliers with length
+p2 <- ggplot(imdb_data, aes(x = genre, y = length))+
+  geom_boxplot(fill=c("red", "green", "yellow", "blue", "pink", "white", "lightblue"))
+p2
+```
+Comment on boxplot above median along with outliers
+
+
+```{r}
+p3 <- ggplot(imdb_data, aes(x = genre, y = budget))+
+  geom_boxplot(fill=c("red", "green", "yellow", "blue", "pink", "white", "lightblue"))
+p3
+budget_outliers <- imdb_data %>%
+  mutate(is_outlier = budget > quantile(budget, 0.75) + 1.5 * IQR(budget) |
+           budget < quantile(budget, 0.25) - 1.5 * IQR(budget)) %>%
+  filter(is_outlier) %>%
+  ungroup() # 16 outliers
+```
+Comment on boxplot above median along with outliers
+
+```{r}
+log_votes_outliers <- imdb_data %>%
+  group_by(genre) %>%
+  mutate(is_outlier = log_votes > quantile(log_votes, 0.75) + 1.5 * IQR(log_votes) |
+           log_votes < quantile(log_votes, 0.25) - 1.5 * IQR(log_votes)) %>%
+  filter(is_outlier) %>%
+  ungroup() # 294 outliers with votes, 57 outliers with log_votes
+
+p4 <- ggplot(imdb_data, aes(x = genre, y = log_votes))+
+  geom_boxplot(fill=c("red", "green", "yellow", "blue", "pink", "white", "lightblue"))
+p4
+```
+
+```{r}
+rating_outliers <- imdb_data %>%
+  group_by(genre) %>%
+  mutate(is_outlier = rating > quantile(rating, 0.75) + 1.5 * IQR(rating) |
+           rating < quantile(rating, 0.25) - 1.5 * IQR(rating)) %>%
+  filter(is_outlier) %>%
+  ungroup() #138 outliers
+p5 <- ggplot(imdb_data, aes(x = genre, y = rating))+
+  geom_boxplot(fill=c("red", "green", "yellow", "blue", "pink", "white", "lightblue"))
+p5
+```
+
+
+>>>>>>> Stashed changes
 
 # Formal Data Analysis {#sec-FDA}
 
