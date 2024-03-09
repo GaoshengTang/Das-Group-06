@@ -64,7 +64,7 @@ imdb_data$length[is.na(imdb_data$length)] <- median_length
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
-##property1: length
+## property1: length
 ```{r}
 #| label: fig-plot1
 #| fig-cap: boxplot of length
@@ -109,7 +109,7 @@ table|>
 ```
 @table1 shows that the size of the film with low rating is  more than twice as many as that with high rating.  The mean length film with high rating(57.95) is lower than that with low rating(95.80).On the whole, highly rated films have a low parity of length phrases. But a low rated films is more stable.
 
-##property2:budget((in $1000000s)
+## property2:budget((in $1000000s)
 
 ```{r}
 #| label: fig-plot2
