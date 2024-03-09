@@ -64,40 +64,61 @@ imdb_data$length[is.na(imdb_data$length)] <- median_length
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
-## property1: length
+## scatterplot
+
 ```{r}
 #| label: fig-plot1
-#| fig-cap: boxplot of length
+#| fig-cap: scatterplot matrix with ggpairs
+#| fig-align: center
+#| message: false
+#Add a new column#
+imdb_data <- imdb_data %>%
+  mutate(log_votes = log(votes))
+
+imdb_data <- imdb_data %>%
+  mutate(log_length = log(length))
+
+ggpairs(imdb_data_numeric[, c("year", "budget", "rating","length","log_length","votes","log_votes")], 
+                              title="Scatterplot matrix")
+```
+
+## property1:length(ln)
+
+```{r}
+#| label: fig-plot2
+#| fig-cap: boxplot of length(ln)
 #| fig-width: 4
 #| fig-height: 5
 #| fig-align: center
 #| message: false
 #Add a binary variable as a column
-imdb_data$rate<- ifelse(imdb_data$rating >= 7, "high rating(>=7)", "low rating(<7)")
+imdb_data$rate<- ifelse(imdb_data$rating >= 7, "high rating", "low rating")
 #boxplot
-ggplot(data = imdb_data, aes(x = rate, y = length,fill=rate) )+
+ggplot(data = imdb_data, aes(x = rate, y = log_length,fill=rate) )+
   geom_boxplot() +
-  labs(x = "rating", y = "length")
+  labs(x = "rating", y = "log_length")
 ```
-@fig-plot1 shows that the median film length of high rating films is less than that of low rating films. Interquartile Range of low rating is smaller than that of high rating, which shows that the data about low rating is more concentrated.
+
+@fig-plot2 shows that the median film log_length of high rating films is less than that of low rating films. Interquartile Range of low rating is smaller than that of high rating, which shows that the data about low rating is more concentrated.
 
 ```{r}
 #| label: table1
-#| tbl-cap: Summary statistics on hlength.
+#| tbl-cap: Summary statistics on length.
+#Add a column to make the table clearer
 table=imdb_data %>%
   group_by(rate) %>%
-  summarise('Mean' = mean(length),
-            'Median' = median(length),
-            'St.Dev' = sd(length),
-            'Min' = min(length),
-            'Max' = max(length),
-            'IQR' = quantile(length,0.75)-quantile(length,0.25),
+  summarise('Mean' = mean(log_length),
+            'Median' = median(log_length),
+            'St.Dev' = sd(log_length),
+            'Min' = min(log_length),
+            'Max' = max(log_length),
+            'IQR' = quantile(log_length,0.75)-quantile(log_length,0.25),
             'Sample_size' = n())
-
 table|>
   gt() |>
   fmt_number(decimals=2) |>
   cols_label(
+    rate=html("rate"),
     Mean = html("Mean"),
     Median = html("Median"),
     St.Dev = html("Std. Dev"),
@@ -107,12 +128,13 @@ table|>
     Sample_size = html("Sample Size")
   )
 ```
-@table1 shows that the size of the film with low rating is  more than twice as many as that with high rating.  The mean length film with high rating(57.95) is lower than that with low rating(95.80).On the whole, highly rated films have a low parity of length phrases. But a low rated films is more stable.
 
-## property2:budget((in $1000000s)
+@table1 shows that the size of the film with low rating is more than twice as many as that with high rating. The mean log_length film with high rating(3.62) is lower than that with low rating(4.52).On the whole, highly rated films have a low parity of length phrases. But a low rated films is more stable.
+
+## property2:budget(in \$1000000s)
 
 ```{r}
-#| label: fig-plot2
+#| label: fig-plot3
 #| fig-cap: boxplot of budget
 #| fig-width: 4
 #| fig-height: 5
@@ -123,7 +145,8 @@ ggplot(data = imdb_data, aes(x = rate, y = budget,fill=rate) )+
   geom_boxplot() +
   labs(x = "rating", y = "budget")
 ```
-@fig-plot2 shows that the median budget film  of high rating films is higher than that of low rating films. 
+
+@fig-plot3 shows that the median budget film of high rating films is higher than that of low rating films.
 
 ```{r}
 #| label: table2
@@ -150,7 +173,79 @@ table|>
     Sample_size = html("Sample Size")
   )
 ```
-@table2 shows that the  mean budget film with high rating(13.09 in $1000000s) is higher than that with low rating(11.51 in $1000000s).And ehe  median budget film with high rating(13.00 in $1000000s) is higher than that with low rating(11.50 in $1000000s).In general, films with high rating have higher budgets than movies with low rating.
+
+@table2 shows that the mean budget film with high rating(13.09 in \$1000000s) is higher than that with low rating(11.51 in \$1000000s).And the median budget film with high rating(13.00 in \$1000000s) is higher than that with low rating(11.50 in \$1000000s).In general, films with high rating have higher budgets than movies with low rating. ##votes
+
+## property3: votes(ln)
+
+```{r}
+#| label: fig-plot4
+#| fig-cap: boxplot of votes(ln)
+#| fig-width: 4
+#| fig-height: 5
+#| fig-align: center
+#| message: false
+#boxplot
+ggplot(data = imdb_data, aes(x = rate, y = log_votes,fill=rate) )+
+  geom_boxplot() +
+  labs(x = "rating", y = "log_votes")
+```
+
+@fig-plot4 shows that the median log_votes film of high rating films is lower than that of low rating films.
+
+```{r}
+#| label: table3
+#| tbl-cap: Summary statistics on votes(ln).
+table=imdb_data %>%
+  group_by(rate) %>%
+  summarise('Mean' = mean(log_votes),
+            'Median' = median(log_votes),
+            'St.Dev' = sd(log_votes),
+            'Min' = min(log_votes),
+            'Max' = max(log_votes),
+            'IQR' = quantile(log_votes,0.75)-quantile(log_votes,0.25),
+            'Sample_size' = n())
+
+table|>
+  gt() |>
+  fmt_number(decimals=2) |>
+  cols_label(
+    Mean = html("Mean"),
+    Median = html("Median"),
+    St.Dev = html("Std. Dev"),
+    Min = html("Minimum"),
+    Max = html("Maximum"),
+    IQR = html("Interquartile Range"),
+    Sample_size = html("Sample Size")
+  )
+```
+
+@table3 shows that the mean log_votes film with high rating(3.47) is lower than that with low rating(4.03). In general, there were fewer log_votes for films with high ratings.
+
+## property4:genre
+
+```{r}
+library(janitor)
+imdb_data %>% 
+  tabyl(genre, rate) %>% 
+  adorn_percentages() %>% 
+  adorn_pct_formatting() %>%
+adorn_ns() # To show original counts
+```
+
+```{r}
+#| label: fig-plot5
+#| fig-cap: bar charts of genre
+#| fig-width: 4
+#| fig-height: 5
+#| fig-align: center
+#| message: false
+g <- ggplot(imdb_data, aes(genre))
+# Number of cars in each class:
+g + geom_bar(aes(fill = rate))
+```
+
+@fig-plot5 shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
 
 # Formal Data Analysis {#sec-FDA}
 
