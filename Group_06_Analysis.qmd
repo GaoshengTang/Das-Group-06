@@ -58,17 +58,9 @@ A check for missing values was conducted and it was found that 103 observation w
 missing_values <- sum(is.na(imdb_data$length)) #103 values
 colSums(is.na(imdb_data)) #103 observations are missing in 'length'
 
-# Impute missing values with the median since median is a robust measure i.e not impacted by outliers as much as mean
-median_length_by_genre <- imdb_data %>%
-  group_by(genre) %>%
-  summarize(median_length = median(length, na.rm = TRUE))
-
-median_length_by_genre
-for (i in 1:nrow(median_length_by_genre)) {
-  genre <- median_length_by_genre$genre[i]
-  median_length <- median_length_by_genre$median_length[i]
-  imdb_data$length[imdb_data$genre == genre & is.na(imdb_data$length)] <- median_length
-}
+# Impute missing values with the median 
+median_length <- median(imdb_data$length, na.rm = TRUE)
+imdb_data$length[is.na(imdb_data$length)] <- median_length
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
@@ -221,7 +213,7 @@ length_outliers <- imdb_data %>%
   mutate(is_outlier = length > quantile(length, 0.75) + 1.5 * IQR(length) |
            length < quantile(length, 0.25) - 1.5 * IQR(length)) %>%
   filter(is_outlier) %>%
-  ungroup() # 97 outliers
+  ungroup()
 ```
 
 @fig-plot2 shows that the median film log_length of high rating films is less than that of low rating films. Interquartile Range of low rating is smaller than that of high rating, which shows that the data about low rating is more concentrated.
@@ -243,7 +235,7 @@ group_by(rate) %>%
   mutate(is_outlier = budget > quantile(budget, 0.75) + 1.5 * IQR(budget) |
            budget < quantile(budget, 0.25) - 1.5 * IQR(budget)) %>%
   filter(is_outlier) %>%
-  ungroup() #9 outliers
+  ungroup()
   
 ```
 
