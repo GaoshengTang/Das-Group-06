@@ -79,9 +79,11 @@ As per the research question, a new column 'high_rating' containing binary varia
 ```{r}
 #new binary column#
 imdb_data$high_rating <- ifelse(imdb_data$rating >= 7, 1, 0)
+imdb_data$high_rating <- factor(imdb_data$high_rating, levels = c(0, 1))
 
 #Add a categorcial variable as a column
 imdb_data$rate<- ifelse(imdb_data$rating >= 7, "Rating greater than 7", "Rating less than 7")
+imdb_data$rate <- factor(imdb_data$rate)
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
@@ -545,7 +547,247 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
 
 # Formal Data Analysis {#sec-Formal}
 
-## Generalised Linear Model fit
+## Fitting the Model {#sec-fm}
+
+### Saturated Model {#sec-sat.model}
+
+Include latex equation
+
+```{r}
+#| label: tbl-6
+#| tbl-cap: Summary for Saturated Model
+saturated_glm_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+summary(saturated_glm_model)
+
+saturated_coefficients <- summary(saturated_glm_model)$coefficients
+
+saturated_coefficients_df <- as.data.frame(saturated_coefficients) # Create a data frame
+
+saturated_coefficients_df$row_names <- rownames(saturated_coefficients_df)
+
+saturated_coefficients_table <- saturated_coefficients_df %>%
+  gt(rowname_col = "row_names") %>%
+  fmt_number(decimals=3) %>%
+  tab_header(
+    title = "Summary for Saturated Model"
+  )
+
+# Print the table
+print(saturated_coefficients_table)
+
+```
+
+Baseline category for explanatory variable 'genre' is "Action".
+
+Wald Statistic z : p-value of log_votes is greater that 0.05
+
+We can look what happens to the residual deviance as we add each term by using anova(saturated_glm_model)
+
+```{r}
+anova(saturated_glm_model)
+```
+
+It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. We could try a model without 'year' and 'log_votes' as the resulting reduction in deviance is smaller than 95th percentile.
+
+### Model 1 {#sec-m1.model}
+
+Insert Latex Equation
+
+```{r}
+m1_glm_model <- glm(high_rating ~ length + budget + log_votes + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+
+m1_coefficients <- summary(m1_glm_model)$coefficients
+
+m1_coefficients_df <- as.data.frame(m1_coefficients) # Create a data frame
+
+m1_coefficients_df$row_names <- rownames(m1_coefficients_df)
+
+m1_coefficients_table <- m1_coefficients_df %>%
+  gt(rowname_col = "row_names") %>%
+  fmt_number(decimals=3) %>%
+  tab_header(
+    title = "Summary for Model 1"
+  )
+
+# Print the table
+print(m1_coefficients_table)
+
+```
+
+Stepwise model selection
+
+```{r}
+step_model_m1 <- step(m1_glm_model)
+```
+
+### Model 2 {#sec-m2.model}
+
+Insert Latex Equation
+
+```{r}
+m2_glm_model <- glm(high_rating ~ length + budget + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+summ(m2_glm_model)
+
+m2_coefficients <- summary(m2_glm_model)$coefficients
+
+m2_coefficients_df <- as.data.frame(m2_coefficients) # Create a data frame
+
+m2_coefficients_df$row_names <- rownames(m2_coefficients_df)
+
+m2_coefficients_table <- m2_coefficients_df %>%
+  gt(rowname_col = "row_names") %>%
+  fmt_number(decimals=3) %>%
+  tab_header(
+    title = "Summary for Model 2"
+  )
+
+# Print the table
+print(m2_coefficients_table)
+
+```
+
+Baseline category for our binary response high_rating is 0
+
+```{r}
+levels(imdb_data$high_rating)
+# [1] "0" "1"
+```
+
+Log-odds
+
+```{r}
+m2.coef <- round(coef(m2_glm_model), 3)
+```
+
+95% confidence interval for these log-odds
+
+```{r}
+m2.logodds <- confint(m2_glm_model) %>%
+  kable()
+```
+
+Plot
+
+```{r}
+m2_plot_logodds <- plot_model(m2_glm_model, show.values = TRUE, transform = NULL,
+           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
+```
+
+Adding estimates of the log-odds to our data set
+
+```{r}
+imdb_data <- imdb_data %>%
+  mutate(logodds.1=predict(m2_glm_model))
+```
+
+Odds
+
+```{r}
+m2.odds <- m2_glm_model %>%
+  coef() %>%
+  exp() 
+```
+
+95% Confidence Interval for odds
+
+```{r}
+m2_log_odds_interval <- confint(m2_glm_model)
+m2_odds_interval <- exp(m2_log_odds_interval) %>%
+  kable()
+```
+
+Plot
+
+```{r}
+m2_plot_odds <-plot_model(m2_glm_model, show.values = TRUE, axis.lim = c(1,1.5),
+           title = "Odds", show.p = FALSE)
+```
+
+Adding the estimates of the odds to our data set
+
+```{r}
+imdb_data <- imdb_data %>%
+  mutate(odds.1=exp(logodds.1))
+```
+
+Probabilities add the probabilities to our data, which is done using the fitted() function:
+
+```{r}
+imdb_data <- imdb_data %>%
+  mutate(probs.1=fitted(m2_glm_model))
+```
+
+Plot the Probability being Rating greater than 7
+
+```{r}
+plot_model(m2_glm_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
+```
+
+## Model Checking and Diagnostics (#Sec-mcd)
+
+### Model Selection {#Sec-ms}
+```{r}
+saturated_glm_model <- glm(high_rating ~ year + length + budget + log_votes + genre, 
+                           data = imdb_data, family = binomial(link = "logit"))
+m1_glm_model <- glm(high_rating ~ length + budget + log_votes + genre, 
+                    data = imdb_data, family = binomial(link = "logit"))
+m2_glm_model <- glm(high_rating ~ length + budget + genre, 
+                    data = imdb_data, family = binomial(link = "logit"))
+```
+
+```{r}
+# 1. Likelihood Ratio Chi-Squared Statistic Test
+lr_test_m1 <- anova(saturated_glm_model, m1_glm_model, test = "Chisq")
+lr_test_m2 <- anova(saturated_glm_model, m2_glm_model, test = "Chisq")
+
+# 2. AIC
+aic_values <- AIC(saturated_glm_model, m1_glm_model, m2_glm_model)
+
+# 3. BIC
+bic_values <- BIC(saturated_glm_model, m1_glm_model, m2_glm_model)
+
+
+```
+
+```{r}
+# 4. Residuals (e.g., deviance residuals)
+# Saturated Model
+dres.sat <- resid(saturated_glm_model, type="deviance") # Deviance Residuals
+pres.sat <- resid(saturated_glm_model, type="pearson") #Pearson Residuals
+pred.sat <- predict(saturated_glm_model, type="response") #Fitted probabilities
+d.sat <- data.frame (pred.sat=pred.sat, dres.sat=dres.sat, pres.sat=pres.sat)
+
+g1 <- ggplot(d.sat, aes(x=pred.sat, y=dres.sat))+
+  geom_point()
+
+# Model 1
+dres.m1 <- resid(m1_glm_model, type="deviance") # Deviance Residuals
+pres.m1 <- resid(m1_glm_model, type="pearson") #Pearson Residuals
+pred.m1 <- predict(m1_glm_model, type="response") #Fitted probabilities
+d.m1 <- data.frame (pred.m1=pred.m1, dres.m1=dres.m1, pres.m1=pres.m1)
+
+g2 <- ggplot(d.m1, aes(x=pred.m1, y=dres.m1))+
+  geom_point()
+
+# Model 2
+dres.m2 <- resid(m2_glm_model, type="deviance") # Deviance Residuals
+pres.m2 <- resid(m2_glm_model, type="pearson") #Pearson Residuals
+pred.m2 <- predict(m2_glm_model, type="response") #Fitted probabilities
+d.m2 <- data.frame (ppred.m2=pred.m2, dres.m2=dres.m2, pres.m2=pres.m2)
+
+g3 <- ggplot(d.m2, aes(x=pred.m2, y=dres.m2))+
+  geom_point()
+
+```
+
+```{r}
+# ROC #
+
+```
+
 
 ```{r}
 # Use GLS model to fit data with all explanatory variables
