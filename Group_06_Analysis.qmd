@@ -38,7 +38,7 @@ The study aims to investigate the relationship between various film attributes a
 
 ```{r}
 # Import the data sets
-imdb_data <- read.csv("dataset06.csv")
+imdb_data <- read.csv("/Users/gracezhang/Documents/courses/DAS/group work/Project 2/dataset06.csv")
 
 ```
 
@@ -417,7 +417,9 @@ The @tbl-6 shows that the mean log_votes film with high rating(3.47) is lower th
 @fig-plot5 shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
 
 # Formal Data Analysis {#sec-Formal}
+
 ## Generalised Linear Model fit
+
 ```{r}
 # Use GLS model to fit data with all explanatory variables
 mod_0 <- glm(high_rating ~ year + length + budget + log_votes + genre, data = imdb_data, family = binomial(link = "logit"))
@@ -427,21 +429,12 @@ mod_0 %>%
 
 ```
 
-Intercept: The intercept term of the model, the log odds when all explanatory variables are zero.
-year: the log odds increase by about 0.009098 for each additional year, meaning that more recent films have a slightly higher chance of being rated higher than 7 compared to older films.
-length: For every additional minute, the log odds decrease by about 0.063815, meaning that longer films are less likely to be rated higher than 7.
-budget: for every one million budget increase, the log odds increase by about 0.512148, indicating that films with higher budgets are more likely to rate higher than 7.
-log_votes: The natural logarithm of the number of votes increases by about 0.003142 per unit, but this is not significant.
-genreAnimation: Animated films are less likely to receive high ratings than action films, but the difference is not statistically significant.
-genreComedy: Comedy films are significantly more likely to receive high ratings compared to action films.
-genreDocumentary: Documentaries are significantly more likely to be rated highly than action films.
-genreDrama: Dramas are significantly less likely to be rated highly than action films, and the difference is statistically significant.
-genreRomance: Romance films are significantly less likely to be rated highly than action films, but the difference is not statistically significant.
-genreShort: Short films are significantly more likely to receive high ratings compared to action films.
-## Model Selection
+Intercept: The intercept term of the model, the log odds when all explanatory variables are zero. year: the log odds increase by about 0.009098 for each additional year, meaning that more recent films have a slightly higher chance of being rated higher than 7 compared to older films. length: For every additional minute, the log odds decrease by about 0.063815, meaning that longer films are less likely to be rated higher than 7. budget: for every one million budget increase, the log odds increase by about 0.512148, indicating that films with higher budgets are more likely to rate higher than 7. log_votes: The natural logarithm of the number of votes increases by about 0.003142 per unit, but this is not significant. genreAnimation: Animated films are less likely to receive high ratings than action films, but the difference is not statistically significant. genreComedy: Comedy films are significantly more likely to receive high ratings compared to action films. genreDocumentary: Documentaries are significantly more likely to be rated highly than action films. genreDrama: Dramas are significantly less likely to be rated highly than action films, and the difference is statistically significant. genreRomance: Romance films are significantly less likely to be rated highly than action films, but the difference is not statistically significant. genreShort: Short films are significantly more likely to receive high ratings compared to action films. \## Model Selection
+
 ```{r}
 # Backward stepping stepwise regression using AIC
 step_model <- step(mod_0, direction="both", trace=FALSE)
 summary(step_model)
 ```
+
 # Conclusions {#sec-Conc}
