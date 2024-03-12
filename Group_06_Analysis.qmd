@@ -170,8 +170,17 @@ summary_votes <- imdb_data %>%
             'Max' = max(votes),
             'IQR' = quantile(votes,0.75)-quantile(votes,0.25),
             'Sample_size' = n())
+summary_rating <- imdb_data %>%
+  summarise('Variables'="rating",
+            'Mean' = mean(rating),
+            'Median' = median(rating),
+            'St.Dev' = sd(rating),
+            'Min' = min(rating),
+            'Max' = max(rating),
+            'IQR' = quantile(rating,0.75)-quantile(rating,0.25),
+            'Sample_size' = n())
 
-combined_summary <- bind_rows(summary_year, summary_length, summary_budget, summary_votes)
+combined_summary <- bind_rows(summary_year, summary_length, summary_budget, summary_votes, summary_rating)
 combined_summary |>
   gt() |>
   fmt_number(decimals=2) |>
