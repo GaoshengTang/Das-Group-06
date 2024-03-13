@@ -92,7 +92,7 @@ Check on the size of a data set
 
 ```{r}
 # check on the size of a data set
-dim(imdb_data)
+a<-dim(imdb_data)
 ```
 
 Sample size is 1937. And it have 9 variables,7 of which are in the original data.
@@ -523,7 +523,8 @@ genre_form=imdb_data %>%
   adorn_pct_formatting() %>%
   adorn_ns()%>%
   mutate(genre_sum_count=as.matrix(data_1[2]))
-genre_form
+genre_form|>
+  gt()
 ```
 
 We can see the size sample about Romance films is only 20,which is too small to fit model.And we also can predict the positive effect of action,Drama on rate score.
