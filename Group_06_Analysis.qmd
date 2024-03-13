@@ -79,17 +79,9 @@ As per the research question, a new column 'high_rating' containing binary varia
 ```{r}
 #new binary column#
 imdb_data$high_rating <- ifelse(imdb_data$rating >= 7, 1, 0)
-<<<<<<< Updated upstream
-=======
-imdb_data$high_rating <- factor(imdb_data$high_rating, levels = c(0, 1)) #column converted from character type to factor type
->>>>>>> Stashed changes
 
 #Add a categorical variable as a column
 imdb_data$rate<- ifelse(imdb_data$rating >= 7, "Rating greater than 7", "Rating less than 7")
-<<<<<<< Updated upstream
-=======
-imdb_data$rate <- factor(imdb_data$rate) #column converted from character type to factor type
->>>>>>> Stashed changes
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
@@ -100,11 +92,7 @@ The data set has 1937 rows and 9 columns, 7 of which are from the original data.
 
 ```{r}
 # check on the size of a data set
-<<<<<<< Updated upstream
-a<-dim(imdb_data)
-=======
 dim <- dim(imdb_data)
->>>>>>> Stashed changes
 ```
 
 Let's have a look at the first five rows of the data frame.
