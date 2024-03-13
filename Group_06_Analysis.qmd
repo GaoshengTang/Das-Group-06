@@ -536,9 +536,6 @@ The @fig-dodgedbarplot-genre supports the table above.
 
 # Formal Data Analysis {#sec-Formal}
 
-<<<<<<< Updated upstream
-## Generalised Linear Model fit
-=======
 ## Fitting the Model {#sec-fm}
 
 ### Saturated Model {#sec-sat.model}
@@ -779,24 +776,6 @@ g3 <- ggplot(d.m2, aes(x=pred.m2, y=dres.m2))+
 ```{r}
 # ROC #
 
-```
->>>>>>> Stashed changes
-
-```{r}
-# Use GLS model to fit data with all explanatory variables
-mod_0 <- glm(high_rating ~ year + length + budget + log_votes + genre, data = imdb_data, family = binomial(link = "logit"))
-
-mod_0 %>%
-  summary()
-
-```
-
-Intercept: The intercept term of the model, the log odds when all explanatory variables are zero. year: the log odds increase by about 0.009098 for each additional year, meaning that more recent films have a slightly higher chance of being rated higher than 7 compared to older films. length: For every additional minute, the log odds decrease by about 0.063815, meaning that longer films are less likely to be rated higher than 7. budget: for every one million budget increase, the log odds increase by about 0.512148, indicating that films with higher budgets are more likely to rate higher than 7. log_votes: The natural logarithm of the number of votes increases by about 0.003142 per unit, but this is not significant. genreAnimation: Animated films are less likely to receive high ratings than action films, but the difference is not statistically significant. genreComedy: Comedy films are significantly more likely to receive high ratings compared to action films. genreDocumentary: Documentaries are significantly more likely to be rated highly than action films. genreDrama: Dramas are significantly less likely to be rated highly than action films, and the difference is statistically significant. genreRomance: Romance films are significantly less likely to be rated highly than action films, but the difference is not statistically significant. genreShort: Short films are significantly more likely to receive high ratings compared to action films. \## Model Selection
-
-```{r}
-# Backward stepping stepwise regression using AIC
-step_model <- step(mod_0, direction="both", trace=FALSE)
-summary(step_model)
 ```
 
 # Conclusions {#sec-Conc}
