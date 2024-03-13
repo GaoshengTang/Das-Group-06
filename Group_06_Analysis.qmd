@@ -48,7 +48,7 @@ imdb_data <- read.csv("dataset06.csv")
 Before we begin the analysis of our data, let's transform the data using various tools. The process below describes the detailed data wrangling techniques that are used to get the desired data set. After having a glimpse of the data set, the 'genre' column is converted to a type factor type.
 
 ```{r}
-imdb_data$genre <- as.factor(imdb_data$genre) # genre column converted from character type to factor type
+imdb_data$genre <- as.factor(imdb_data$genre) #column converted from character type to factor type
 ```
 
 A check for missing values is conducted and it is found that 103 observations are missing from the column 'length'. Missing values are imputed with the median since median is a robust measure, less impacted by outliers as much as mean. The function *median( )* reveals the median to be 90 minutes. However, it is observed in @tbl-median-length that the median lengths vary across the different genres. With this information, the missing lengths of films are replaced by median length of the respective genre.
@@ -79,23 +79,33 @@ As per the research question, a new column 'high_rating' containing binary varia
 ```{r}
 #new binary column#
 imdb_data$high_rating <- ifelse(imdb_data$rating >= 7, 1, 0)
+<<<<<<< Updated upstream
+=======
+imdb_data$high_rating <- factor(imdb_data$high_rating, levels = c(0, 1)) #column converted from character type to factor type
+>>>>>>> Stashed changes
 
-#Add a categorcial variable as a column
+#Add a categorical variable as a column
 imdb_data$rate<- ifelse(imdb_data$rating >= 7, "Rating greater than 7", "Rating less than 7")
+<<<<<<< Updated upstream
+=======
+imdb_data$rate <- factor(imdb_data$rate) #column converted from character type to factor type
+>>>>>>> Stashed changes
 ```
 
 # Exploratory Data Analysis {#sec-EDA}
 
-## view the data
+## View the data
 
-Check on the size of a data set
+The data set has 1937 rows and 9 columns, 7 of which are from the original data.
 
 ```{r}
 # check on the size of a data set
+<<<<<<< Updated upstream
 a<-dim(imdb_data)
+=======
+dim <- dim(imdb_data)
+>>>>>>> Stashed changes
 ```
-
-Sample size is 1937. And it have 9 variables,7 of which are in the original data.
 
 Let's have a look at the first five rows of the data frame.
 
@@ -121,15 +131,13 @@ The variables in @tbl-glimpse-dataset
 
 -   **genre** : Genre of the film
 
--   **rating** : IMDB rating from 0 to10
+-   **rating** : IMDB rating from 0 to 10
 
 -   **high_rating** : 1 for IMDB ratings greater than or equal to seven and 0 for IMDB ratings less than 7
 
 -   **rate** : 'Rating greater than 7' got high_rating = 1 and 'Rating less than 7' for high_rating = 0
 
 ## Summary Statistics {#sec-sum}
-
-Since variables year, length,budget,votes,rating are continuous, we need get their summary contains mean,median,standard deviation,minimum maximum.
 
 ```{r}
 #| label: tbl-summary-statistics
@@ -189,28 +197,24 @@ combined_summary |>
     Mean = html("Mean"),
     Median = html("Median"),
     St.Dev = html("Std. Dev"),
-    Min = html("Minimum"),
-    Max = html("Maximum"),
-    IQR = html("Interquartile Range"),
+    Min = html("Min"),
+    Max = html("Max"),
+    IQR = html("IQR"),
     Sample_size = html("Sample Size")
   ) 
 ```
 
-The @tbl-summary-statistics shows that the summary for the columns year, length, budget and votes.
+The @tbl-summary-statistics shows that the summary for the columns year, length, budget, votes and rating.
 
-• The number of films in sample is 1937.
+• For the variable year, the years of the films ranges from 1896 to 2005.
 
-• For the variable year, the years of the films ranged from 1896 to 2005.
+• For the variable length, the films runs from 1 minute to 316 minutes.The median for length of films is 90 minutes.
 
-• For the variable length, the films runs from 1 minute to 316 minutes.The average length of a movie is 83.22 minutes.
+• For variable budget, the budget of films is from 3.2 (\$1000000s) to 21.2 (\$1000000s).The median budget of a film is 12(\$1000000s).
 
-• For variable budget, the budget of films is from 3.2 (\$1000000s) to 21.2 (\$1000000s).The median budget of a movie is 12(\$1000000s).
-
-• For variable votes, the votes of films is from 5 to 103,854.The range of variation is very large, and the IQR is relatively large. The data is not stable.
+• For variable votes, the votes of films ranges from 5 to 103,854 which suggests large variation. It can be observed the IQR is relatively large as well.
 
 ## Correlation {#sec-cor}
-
-Check correlations (as scatterplots), distribution and print correlation coefficient.
 
 ```{r}
 #| label: fig-scatterplot-matrix
@@ -224,13 +228,11 @@ scatterplot_matrix <- ggpairs(imdb_data[, c("rating","year", "budget",  "length"
 scatterplot_matrix
 ```
 
-@fig-scatterplot-matrix shows rating and budget show a significant linear positive correlation. And rating is significant linear negative correlation with length. Between rating and year,votes have weak correlation.
+The @fig-scatterplot-matrix shows weak correlation between the variables.
 
 ## Visualization {#sec-viz}
 
-### Histograms for continuous variable(rating,year,budget,length,votes)
-
-Histograms to understand the data structures of different variables
+### Histograms
 
 ```{r}
 #| label: fig-histograms
@@ -273,7 +275,7 @@ log_votes_plot <- ggplot(data=imdb_data, mapping=aes(x=log(votes)))+
 grid.arrange(rating_plot,year_plot,budget_plot,length_plot,votes_plot, log_votes_plot, ncol=2)
 ```
 
-The variable votes has a large data difference and deviation, so we can log transformation for votes.
+The @fig-histograms shows that the data structures follow exponential distributions. The variable 'votes' displays skewness due to large difference in values of maximum and minimum values. To reduce this skewness and facilitate more robust analysis, a logarithmic transformation is used. \clearpage
 
 ```{r}
 #Add a new column#
@@ -281,24 +283,9 @@ imdb_data <- imdb_data %>%
   mutate(log_votes = log(votes))
 ```
 
-### Visualise the distributions of categorical variable genre
+### Scatterplot for rating vs explanatory variables
 
-```{r}
-#| label: fig-stacked-barplot
-#| fig-cap: Stacked barplot of statistical distribution for ratings by genre.
-#| fig-align: center
-#| fig-width: 6
-#| message: false
-ggplot(imdb_data, aes(x = genre, fill = rate)) +
-   geom_bar(stat = "count") +
-  labs(x = "Genre", y = "Count")+
-  theme_bw()+
-  theme(legend.position = "bottom") 
-```
-
-## The relationship between rating and explanatory variables
-
-Scatterplots to understand the relationship between rating and four variables(year,length,budget,log_votes)
+Scatterplot to understand the relationship between rating and four variables(year,length,budget,log_votes)
 
 ```{r}
 #| label: fig-scatterplots-relationship
@@ -326,10 +313,14 @@ s4 <- ggplot(data=imdb_data, aes(x = log_votes , y = rating, color = rate))+
   labs(x = "Votes(log)", y = "Rating")+
   theme_bw()
 
-ggarrange(s1,s2,s3,s4,ncol = 2, nrow=2, common.legend = T, legend = "bottom")
+# ggarrange(s1,s2,s3,s4,ncol = 2, nrow=2, common.legend = T, legend = "bottom")
+
+grid.arrange(s1,s2,s3,s4,ncol = 2)
 ```
 
-### Boxplot to understand the relationship between rating and Categorical variable genre
+The @fig-scatterplots-relationship suggests that there seems to be no linear relationship between the response variable and the explanatory variables which justifies the weak correlation observed earlier.
+
+### Boxplot for genre
 
 ```{r}
 #| label: fig-boxplot-ratings
@@ -343,9 +334,11 @@ ggplot(data =imdb_data, mapping = aes(x = genre, y = rating)) +
   theme_bw()
 ```
 
+The @fig-boxplot-ratings distribution of rating genre wise. Outliers for ratings can be seen for the genre's Action, Documentary, Drama and Romance.
+
 ## The relationship response and explanatory variable
 
-### variable1:Length
+### Variable 1: Length
 
 ```{r}
 #| label: fig-boxplot-length
@@ -369,11 +362,12 @@ group_by(rate) %>%
   ungroup() # 97 outliers
 ```
 
-@fig-boxplot-length shows that the median film length of high rating films is less than that of low rating films. It can Interquartile Range of low rating is smaller than that of high rating, which shows that the data about low rating is more concentrated.
+@fig-boxplot-length shows that the median film length of films with 'Rating greater than 7' is less than that of 'Rating less than 7' films. It can be observed IQR of 'Rating less than 7' is smaller but has many outliers.
 
 ```{r}
 #| label: tbl-summary-length
 #| tbl-cap: Summary statistics on length by rating.
+#| tbl-colwidths: [60,40]
 table=imdb_data %>%
   group_by(rate) %>%
   summarise('Mean' = mean(length),
@@ -390,17 +384,17 @@ table|>
     rate=html("rate"),
     Mean = html("Mean"),
     Median = html("Median"),
-    St.Dev = html("Std. Dev"),
-    Min = html("Minimum"),
-    Max = html("Maximum"),
-    IQR = html("Interquartile Range"),
+    St.Dev = html("St.Dev"),
+    Min = html("Min"),
+    Max = html("Max"),
+    IQR = html("IQR"),
     Sample_size = html("Sample Size")
   )
 ```
 
-The @tbl-summary-length shows that the size of the film with low rating is more than twice as many as that with high rating. The mean length film with high rating(57.95) is lower than that with low rating(95.80).On the whole, highly rated films have a low parity of length phrases. But a low rated films is more stable.
+The @tbl-summary-length The median length film with 'Rating greater than 7' is (73 minutes) lower than that with 'Rating less than 7' (95.74 minutes).
 
-### variable2:Budget
+### Variable 2 : budget
 
 ```{r}
 #| label: fig-boxplot-budget
@@ -423,7 +417,7 @@ group_by(rate) %>%
   ungroup() #9 outliers
 ```
 
-@fig-boxplot-budget shows that the median budget film of high rating films is higher than that of low rating films.
+@fig-boxplot-budget shows that the median budget film of 'Rating greater than 7' is slightly higher than that of 'Rating less than 7' films. There are 9 outliers.
 
 ```{r}
 #| label: tbl-summary-budget
@@ -444,16 +438,16 @@ table|>
   cols_label(
     Median = html("Median"),
     St.Dev = html("Std. Dev"),
-    Min = html("Minimum"),
-    Max = html("Maximum"),
-    IQR = html("Interquartile Range"),
+    Min = html("Min"),
+    Max = html("Max"),
+    IQR = html("IQR"),
     Sample_size = html("Sample Size")
   )
 ```
 
-The @tbl-summary-budget shows that the mean budget film with high rating(13.09 in \$1000000s) is higher than that with low rating(11.51 in \$1000000s).And the median budget film with high rating(13.00 in \$1000000s) is higher than that with low rating(11.50 in \$1000000s).In general, films with high rating have higher budgets than movies with low rating. ##votes
+The @tbl-summary-budget shows that the mean and median for 'Rating greater than 7' is almost equal. Similarly, it can be observed for and 'Rating less than 7' as well. This suggests a normal distribution. The variability is also equivalent for the 2 categories.
 
-### variable3:votes(ln)
+### Variable 3 : log_votes
 
 ```{r}
 #| label: fig-boxplot-logvotes
@@ -472,10 +466,10 @@ log_votes_outliers <- imdb_data %>%
   mutate(is_outlier = log_votes > quantile(log_votes, 0.75) + 1.5 * IQR(log_votes) |
            log_votes < quantile(log_votes, 0.25) - 1.5 * IQR(log_votes)) %>%
   filter(is_outlier) %>%
-  ungroup()
+  ungroup() # 59 Outliers
 ```
 
-@fig-boxplot-logvotes shows that the median log_votes film of high rating films is lower than that of low rating films.
+@fig-boxplot-logvotes shows that the median log_votes film of 'Rating greater than 7' films is lower than that of 'Rating less than 7' films.
 
 ```{r}
 #| label: tbl-summary-logvotes
@@ -497,16 +491,16 @@ table|>
     Mean = html("Mean"),
     Median = html("Median"),
     St.Dev = html("Std. Dev"),
-    Min = html("Minimum"),
-    Max = html("Maximum"),
-    IQR = html("Interquartile Range"),
+    Min = html("Min"),
+    Max = html("Max"),
+    IQR = html("IQR"),
     Sample_size = html("Sample Size")
   )
 ```
 
-The @tbl-summary-logvotes hows that the mean log_votes film with high rating(3.47) is lower than that with low rating(4.03). In general, there were fewer log_votes for films with high ratings.
+The @tbl-summary-logvotes shows that the mean and median for 'Rating greater than 7' is almost equal.
 
-### variable4:genre
+### Variable 4 : genre
 
 The ratio of ratings above 7 to ratings below 7 and sample sizes for each type
 
@@ -529,11 +523,17 @@ genre_form|>
   gt()
 ```
 
-We can see the size sample about Romance films is only 20,which is too small to fit model.And we also can predict the positive effect of action,Drama on rate score.
+It can be seen the size for the genre 'Romance' is only 20, which is comparatively small. We observe the following:
+
+-   Animation, Documentary, Short - have more films with 'Rating greater than 7'
+
+-   Action, Drama, Romance  - have more films with 'Rating less than 7'
+
+-   Comedy - films with 'Rating greater than 7' are moderately higher than 'Rating less than 7'
 
 ```{r}
 #| label: fig-dodgedbarplot-genre
-#| fig-cap: Dodged barplot of genre by reating.
+#| fig-cap: Dodged barplot of genre by rating.
 #| fig-width: 6
 #| fig-align: center
 #| message: false
@@ -544,11 +544,255 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
   theme(legend.position = "bottom") 
 ```
 
-@fig-dodgedbarplot-genre shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
+The @fig-dodgedbarplot-genre supports the table above.
 
 # Formal Data Analysis {#sec-Formal}
 
+<<<<<<< Updated upstream
 ## Generalised Linear Model fit
+=======
+## Fitting the Model {#sec-fm}
+
+### Saturated Model {#sec-sat.model}
+
+Include latex equation
+
+```{r}
+#| label: tbl-6
+#| tbl-cap: Summary for Saturated Model
+saturated_glm_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+summary(saturated_glm_model)
+
+saturated_coefficients <- summary(saturated_glm_model)$coefficients
+
+saturated_coefficients_df <- as.data.frame(saturated_coefficients) # Create a data frame
+
+saturated_coefficients_df$row_names <- rownames(saturated_coefficients_df)
+
+saturated_coefficients_table <- saturated_coefficients_df %>%
+  gt(rowname_col = "row_names") %>%
+  fmt_number(decimals=3) %>%
+  tab_header(
+    title = "Summary for Saturated Model"
+  )
+
+# Print the table
+print(saturated_coefficients_table)
+
+```
+
+Baseline category for explanatory variable 'genre' is "Action".
+
+Wald Statistic z : p-value of log_votes is greater that 0.05
+
+We can look what happens to the residual deviance as we add each term by using anova(saturated_glm_model)
+
+```{r}
+anova(saturated_glm_model)
+```
+
+It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. We could try a model without 'year' and 'log_votes' as the resulting reduction in deviance is smaller than 95th percentile.
+
+### Model 1 {#sec-m1.model}
+
+Insert Latex Equation
+
+```{r}
+m1_glm_model <- glm(high_rating ~ length + budget + log_votes + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+
+m1_coefficients <- summary(m1_glm_model)$coefficients
+
+m1_coefficients_df <- as.data.frame(m1_coefficients) # Create a data frame
+
+m1_coefficients_df$row_names <- rownames(m1_coefficients_df)
+
+m1_coefficients_table <- m1_coefficients_df %>%
+  gt(rowname_col = "row_names") %>%
+  fmt_number(decimals=3) %>%
+  tab_header(
+    title = "Summary for Model 1"
+  )
+
+# Print the table
+print(m1_coefficients_table)
+
+```
+
+Stepwise model selection
+
+```{r}
+step_model_m1 <- step(m1_glm_model)
+```
+
+### Model 2 {#sec-m2.model}
+
+Insert Latex Equation
+
+```{r}
+m2_glm_model <- glm(high_rating ~ length + budget + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+summ(m2_glm_model)
+
+m2_coefficients <- summary(m2_glm_model)$coefficients
+
+m2_coefficients_df <- as.data.frame(m2_coefficients) # Create a data frame
+
+m2_coefficients_df$row_names <- rownames(m2_coefficients_df)
+
+m2_coefficients_table <- m2_coefficients_df %>%
+  gt(rowname_col = "row_names") %>%
+  fmt_number(decimals=3) %>%
+  tab_header(
+    title = "Summary for Model 2"
+  )
+
+# Print the table
+print(m2_coefficients_table)
+
+```
+
+Baseline category for our binary response high_rating is 0
+
+```{r}
+levels(imdb_data$high_rating)
+# [1] "0" "1"
+```
+
+Log-odds
+
+```{r}
+m2.coef <- round(coef(m2_glm_model), 3)
+```
+
+95% confidence interval for these log-odds
+
+```{r}
+m2.logodds <- confint(m2_glm_model) %>%
+  kable()
+```
+
+Plot
+
+```{r}
+m2_plot_logodds <- plot_model(m2_glm_model, show.values = TRUE, transform = NULL,
+           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
+```
+
+Adding estimates of the log-odds to our data set
+
+```{r}
+imdb_data <- imdb_data %>%
+  mutate(logodds.1=predict(m2_glm_model))
+```
+
+Odds
+
+```{r}
+m2.odds <- m2_glm_model %>%
+  coef() %>%
+  exp() 
+```
+
+95% Confidence Interval for odds
+
+```{r}
+m2_log_odds_interval <- confint(m2_glm_model)
+m2_odds_interval <- exp(m2_log_odds_interval) %>%
+  kable()
+```
+
+Plot
+
+```{r}
+m2_plot_odds <-plot_model(m2_glm_model, show.values = TRUE, axis.lim = c(1,1.5),
+           title = "Odds", show.p = FALSE)
+```
+
+Adding the estimates of the odds to our data set
+
+```{r}
+imdb_data <- imdb_data %>%
+  mutate(odds.1=exp(logodds.1))
+```
+
+Probabilities add the probabilities to our data, which is done using the fitted() function:
+
+```{r}
+imdb_data <- imdb_data %>%
+  mutate(probs.1=fitted(m2_glm_model))
+```
+
+Plot the Probability being Rating greater than 7
+
+```{r}
+plot_model(m2_glm_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
+```
+
+## Model Checking and Diagnostics (#Sec-mcd)
+
+### Model Selection {#Sec-ms}
+
+```{r}
+saturated_glm_model <- glm(high_rating ~ year + length + budget + log_votes + genre, 
+                           data = imdb_data, family = binomial(link = "logit"))
+m1_glm_model <- glm(high_rating ~ length + budget + log_votes + genre, 
+                    data = imdb_data, family = binomial(link = "logit"))
+m2_glm_model <- glm(high_rating ~ length + budget + genre, 
+                    data = imdb_data, family = binomial(link = "logit"))
+```
+
+```{r}
+# 1. Likelihood Ratio Chi-Squared Statistic Test
+lr_test_m1 <- anova(saturated_glm_model, m1_glm_model, test = "Chisq")
+lr_test_m2 <- anova(saturated_glm_model, m2_glm_model, test = "Chisq")
+
+# 2. AIC
+aic_values <- AIC(saturated_glm_model, m1_glm_model, m2_glm_model)
+
+# 3. BIC
+bic_values <- BIC(saturated_glm_model, m1_glm_model, m2_glm_model)
+
+
+```
+
+```{r}
+# 4. Residuals (e.g., deviance residuals)
+# Saturated Model
+dres.sat <- resid(saturated_glm_model, type="deviance") # Deviance Residuals
+pres.sat <- resid(saturated_glm_model, type="pearson") #Pearson Residuals
+pred.sat <- predict(saturated_glm_model, type="response") #Fitted probabilities
+d.sat <- data.frame (pred.sat=pred.sat, dres.sat=dres.sat, pres.sat=pres.sat)
+
+g1 <- ggplot(d.sat, aes(x=pred.sat, y=dres.sat))+
+  geom_point()
+
+# Model 1
+dres.m1 <- resid(m1_glm_model, type="deviance") # Deviance Residuals
+pres.m1 <- resid(m1_glm_model, type="pearson") #Pearson Residuals
+pred.m1 <- predict(m1_glm_model, type="response") #Fitted probabilities
+d.m1 <- data.frame (pred.m1=pred.m1, dres.m1=dres.m1, pres.m1=pres.m1)
+
+g2 <- ggplot(d.m1, aes(x=pred.m1, y=dres.m1))+
+  geom_point()
+
+# Model 2
+dres.m2 <- resid(m2_glm_model, type="deviance") # Deviance Residuals
+pres.m2 <- resid(m2_glm_model, type="pearson") #Pearson Residuals
+pred.m2 <- predict(m2_glm_model, type="response") #Fitted probabilities
+d.m2 <- data.frame (ppred.m2=pred.m2, dres.m2=dres.m2, pres.m2=pres.m2)
+
+g3 <- ggplot(d.m2, aes(x=pred.m2, y=dres.m2))+
+  geom_point()
+
+```
+
+```{r}
+# ROC #
+
+```
+>>>>>>> Stashed changes
 
 ```{r}
 # Use GLS model to fit data with all explanatory variables
