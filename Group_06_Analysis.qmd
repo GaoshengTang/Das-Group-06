@@ -511,6 +511,8 @@ The @tbl-summary-logvotes hows that the mean log_votes film with high rating(3.4
 The ratio of ratings above 7 to ratings below 7 and sample sizes for each type
 
 ```{r}
+#| label: tbl-7
+#| tbl-cap: Summary statistics of genre
 library(janitor)
 
 data_1=imdb_data %>%
