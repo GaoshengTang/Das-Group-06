@@ -548,6 +548,12 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
 # Formal Data Analysis {#sec-Formal}
 
 ## Fitting the Model {#sec-fm}
+Baseline category for our binary response high_rating is 0
+
+```{r}
+levels(imdb_data$high_rating)
+# [1] "0" "1"
+```
 
 ### Saturated Model {#sec-sat.model}
 
@@ -556,17 +562,17 @@ Include latex equation
 ```{r}
 #| label: tbl-6
 #| tbl-cap: Summary for Saturated Model
-saturated_glm_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
+m0_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
                  data = imdb_data, family = binomial(link="logit"))
-summary(saturated_glm_model)
+summary(m0_model)
 
-saturated_coefficients <- summary(saturated_glm_model)$coefficients
+m0_coefficients <- summary(m0_model)$coefficients
 
-saturated_coefficients_df <- as.data.frame(saturated_coefficients) # Create a data frame
+m0_coefficients_df <- as.data.frame(m0_coefficients) # Create a data frame
 
-saturated_coefficients_df$row_names <- rownames(saturated_coefficients_df)
+m0_coefficients_df$row_names <- rownames(m0_coefficients_df)
 
-saturated_coefficients_table <- saturated_coefficients_df %>%
+m0_coefficients_table <- m0_coefficients_df %>%
   gt(rowname_col = "row_names") %>%
   fmt_number(decimals=3) %>%
   tab_header(
@@ -574,31 +580,140 @@ saturated_coefficients_table <- saturated_coefficients_df %>%
   )
 
 # Print the table
-print(saturated_coefficients_table)
+print(m0_coefficients_table)
 
 ```
 
 Baseline category for explanatory variable 'genre' is "Action".
 
-Wald Statistic z : p-value of log_votes is greater that 0.05
-
-We can look what happens to the residual deviance as we add each term by using anova(saturated_glm_model)
-
+Wald Statistic Z
 ```{r}
-anova(saturated_glm_model)
+p_values_m0 <- Anova(m0_model, type = 3, 
+           test.statistic = "Wald")
 ```
 
-It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. We could try a model without 'year' and 'log_votes' as the resulting reduction in deviance is smaller than 95th percentile.
+log_votes is not statistically significant with a p-value of 0.949925. This suggests that there is insufficient evidence to reject the null hypothesis that the number of votes received by viewers has no effect on the probability of a film being rated as high_rating.
+
+We can look what happens to the residual deviance as we add each term by using anova(m0_model)
+
+**Analysis of Deviance Table**
+```{r}
+anova(m0_model)
+```
+
+Each row in the table represents a term (predictor variable) added to the model.
+
+It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. We could try a model without 'year' and 'log_votes' as the resulting reduction in deviance is smaller than 95th percentile. year":
+
+The change in deviance (3.01) when adding the predictor variable "year" is not statistically significant (p-value \> 0.05), indicating that including "year" does not significantly improve the model fit.The change in deviance (3.26) when adding the predictor variable "log_votes" is not statistically significant (p-value \> 0.05), indicating that including "log_votes" does not significantly improve the model fit.
+
+The same conclusion can be reached if we compare residual deviance and the null deviance. The difference in deviance is 2463.5-1016.8=1446.7 which is much larger than the 95th percentile of a $\chi^2(1936-1926)$
+
+```{r}
+2463.5-1016.8 # 1446.7
+qchisq(df=10, p=0.95) # 18.30704
+```
+
+**Model is a good fit**
+
+The value of the deviance for this model is D = 1016.8. If the model is a good fit, the deviance should approximately follow the $\chi^2(1937-11)$ = $\chi^2(1926)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1937) minus the parameters in the model (11). The 95th percentile of the $\chi^2(1926)$ distribution is 2029.211. Since, 1016.8 < 2029.211, there is no evidence of lack of fit.
+
+```{r}
+nrow(distinct(imdb_data, year, length, budget, log_votes, genre)) # 1937
+
+qchisq(df=1926, 0.95) # 2029.211
+```
+
+
+**Assumptions**
+```{r}
+
+```
+
+
+Log-odds & 95% confidence interval for these log-odds
+```{r}
+m0.coef <- round(coef(m0_model), 3)
+
+m0.logodds <- confint(m0_model) %>%
+  kable()
+```
+
+Plot of logodds
+```{r}
+library(sjPlot)
+m0_plot_logodds <- plot_model(m0_model, show.values = TRUE, transform = NULL,
+           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
+```
+
+Adding estimates of the log-odds to our data set
+```{r}
+imdb_data_m0 <- imdb_data %>%
+  mutate(logodds.m0=predict(m0_model))
+```
+
+Odds and 95% Confidence Interval for odds
+```{r}
+m0.odds <- m0_model %>%
+  coef() %>%
+  exp() 
+
+m0_log_odds_interval <- confint(m0_model)
+m0_odds_interval <- exp(m0_log_odds_interval) %>%
+  kable()
+```
+
+Plot of odds 
+```{r}
+m0_plot_odds <-plot_model(m0_glm_model, show.values = TRUE, axis.lim = c(1,1.5),
+           title = "Odds", show.p = FALSE)
+```
+
+Adding the estimates of the odds to our data set
+```{r}
+imdb_data_m0 <- imdb_data_m0 %>%
+  mutate(odds.m0=exp(logodds.m0))
+```
+
+Probabilities add the probabilities to our data, which is done using the fitted() function:
+```{r}
+imdb_data_m0 <- imdb_data_m0 %>%
+  mutate(probs.m1=fitted(m0_model))
+```
+
+Plot the Probability being Rating greater than 7
+```{r}
+plot_model(m0_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
+```
+
+**Residual Plots**
+```{r}
+# Calculate residuals
+dresiduals_m0 <- resid(m0_model, type = "deviance")
+pfitted_m0 <- predict(m0_model, type = "response")
+
+# Create a data frame for plotting
+residual_data_m0 <- data.frame(Fitted = pfitted_m0, DevianceResiduals = dresiduals_m0)
+
+# Plot scatter plot
+ggplot(residual_data_m0, aes(x = Fitted, y = DevianceResiduals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(x = "Fitted Values", y = "Deviance Residuals",
+       title = "Scatter Plot of Deviance Residuals vs Fitted Values")
+```
+
 
 ### Model 1 {#sec-m1.model}
 
 Insert Latex Equation
 
 ```{r}
-m1_glm_model <- glm(high_rating ~ length + budget + log_votes + genre, 
+m1_model <- glm(high_rating ~ year + length + budget  + genre, 
                  data = imdb_data, family = binomial(link="logit"))
+summary(m1_model)
 
-m1_coefficients <- summary(m1_glm_model)$coefficients
+m1_coefficients <- summary(m1_model)$coefficients
 
 m1_coefficients_df <- as.data.frame(m1_coefficients) # Create a data frame
 
@@ -616,10 +731,110 @@ print(m1_coefficients_table)
 
 ```
 
-Stepwise model selection
+Baseline category for explanatory variable 'genre' is "Action".
+
+Wald Statistic Z
+```{r}
+p_values_m1 <- Anova(m1_model, type = 3, 
+           test.statistic = "Wald")
+anova(m1_model)
+```
+
+All the estimates are statistically significant with a p-value < 0.05. However, looking at residual deviance observe when adding the predictor variable "year" reduction in residual deviance is smallest. 
+
+The same conclusion can be reached if we compare residual deviance and the null deviance. The difference in deviance is 2463.5-1016.8=1446.7 which is much larger than the 95th percentile of a $\chi^2(1936-1926)$
 
 ```{r}
-step_model_m1 <- step(m1_glm_model)
+2463.5-1016.8 # 1446.7
+qchisq(df=10, p=0.95) # 18.30704
+```
+
+**Model is a good fit**
+
+The value of the deviance for this model is D = 1016.8. If the model is a good fit, the deviance should approximately follow the $\chi^2(1932-10)$ = $\chi^2(1922)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1932) minus the parameters in the model (10). The 95th percentile of the $\chi^2(1926)$ distribution is 2025.105. Since, 1016.8 < 2029.211, there is no evidence of lack of fit.
+
+```{r}
+nrow(distinct(imdb_data, year, length, budget, genre)) # 1932
+
+qchisq(df=1922, 0.95) # 2025.105
+```
+
+**Assumptions**
+
+```{r}
+
+```
+
+Log-odds & 95% confidence interval for these log-odds
+```{r}
+m1.coef <- round(coef(m1_model), 3)
+
+m1.logodds <- confint(m1_model) %>%
+  kable()
+```
+
+Plot of logodds
+```{r}
+library(sjPlot)
+m1_plot_logodds <- plot_model(m1_model, show.values = TRUE, transform = NULL,
+           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
+```
+
+Adding estimates of the log-odds to our data set
+```{r}
+imdb_data_m1 <- imdb_data %>%
+  mutate(logodds.m1=predict(m1_model))
+```
+
+Odds and 95% Confidence Interval for odds
+```{r}
+m1.odds <- m1_model %>%
+  coef() %>%
+  exp() 
+
+m1_log_odds_interval <- confint(m1_model)
+m1_odds_interval <- exp(m1_log_odds_interval) %>%
+  kable()
+```
+
+Plot of odds 
+```{r}
+m1_plot_odds <-plot_model(m1_model, show.values = TRUE, axis.lim = c(1,1.5),
+           title = "Odds", show.p = FALSE)
+```
+
+Adding the estimates of the odds to our data set
+```{r}
+imdb_data_m1 <- imdb_data_m1 %>%
+  mutate(odds.m1=exp(logodds.m1))
+```
+
+Probabilities add the probabilities to our data, which is done using the fitted() function:
+```{r}
+imdb_data_m1 <- imdb_data_m1 %>%
+  mutate(probs.m1=fitted(m1_model))
+```
+
+Plot the Probability being Rating greater than 7
+```{r}
+plot_model(m1_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
+```
+
+**Residual Plots**
+```{r}
+# Calculate residuals
+dresiduals_m1 <- resid(m1_model, type = "deviance")
+pfitted_m1 <- predict(m1_model, type = "response")
+
+# Create a data frame for plotting
+residual_data_m1 <- data.frame(Fitted = pfitted_m1, DevianceResiduals = dresiduals_m1)
+
+# Plot scatter plot
+ggplot(residual_data_m1, aes(x = Fitted, y = DevianceResiduals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(x = "Fitted Values", y = "Deviance Residuals",
+       title = "Scatter Plot of Deviance Residuals vs Fitted Values")
 ```
 
 ### Model 2 {#sec-m2.model}
@@ -627,11 +842,11 @@ step_model_m1 <- step(m1_glm_model)
 Insert Latex Equation
 
 ```{r}
-m2_glm_model <- glm(high_rating ~ length + budget + genre, 
+m2_model <- glm(high_rating ~ length + budget + genre, 
                  data = imdb_data, family = binomial(link="logit"))
-summ(m2_glm_model)
+summary(m2_model)
 
-m2_coefficients <- summary(m2_glm_model)$coefficients
+m2_coefficients <- summary(m2_model)$coefficients
 
 m2_coefficients_df <- as.data.frame(m2_coefficients) # Create a data frame
 
@@ -649,134 +864,170 @@ print(m2_coefficients_table)
 
 ```
 
-Baseline category for our binary response high_rating is 0
 
+Baseline category for explanatory variable 'genre' is "Action".
+
+Wald Statistic Z
 ```{r}
-levels(imdb_data$high_rating)
-# [1] "0" "1"
+p_values_m2 <- Anova(m2_model, type = 3, 
+           test.statistic = "Wald")
 ```
 
-Log-odds
+All the estimates are statistically significant  with a p-value < 0.05. 
 
+**Analysis of Deviance Table**
 ```{r}
-m2.coef <- round(coef(m2_glm_model), 3)
+anova(m2_model) # model seems okay
 ```
 
-95% confidence interval for these log-odds
+The same conclusion can be reached if we compare residual deviance and the null deviance. The difference in deviance is 2463.5-1023.2= 1440.3 which is much larger than the 95th percentile of a $\chi^2(1936-1928)$
 
 ```{r}
-m2.logodds <- confint(m2_glm_model) %>%
+2463.5-1023.2 # 1446.7
+qchisq(df=8, p=0.95) # 15.50731
+```
+
+**Model is a good fit**
+
+The value of the deviance for this model is D = 1016.8. If the model is a good fit, the deviance should approximately follow the $\chi^2(1932-10)$ = $\chi^2(1922)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1932) minus the parameters in the model (10). The 95th percentile of the $\chi^2(1926)$ distribution is 2025.105. Since, 1016.8 < 2029.211, there is no evidence of lack of fit.
+
+```{r}
+nrow(distinct(imdb_data, year, length, budget, genre)) # 1932
+
+qchisq(df=1922, 0.95) # 2025.105
+```
+
+**Assumptions**
+
+```{r}
+
+```
+
+Log-odds & 95% confidence interval for these log-odds
+```{r}
+m2.coef <- round(coef(m2_model), 3)
+
+m2.logodds <- confint(m2_model) %>%
   kable()
 ```
 
-Plot
-
+Plot of logodds
 ```{r}
-m2_plot_logodds <- plot_model(m2_glm_model, show.values = TRUE, transform = NULL,
+library(sjPlot)
+m2_plot_logodds <- plot_model(m2_model, show.values = TRUE, transform = NULL,
            title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
 ```
 
 Adding estimates of the log-odds to our data set
-
 ```{r}
-imdb_data <- imdb_data %>%
-  mutate(logodds.1=predict(m2_glm_model))
+imdb_data_m2 <- imdb_data %>%
+  mutate(logodds.m2=predict(m2_model))
 ```
 
-Odds
-
+Odds and 95% Confidence Interval for odds
 ```{r}
-m2.odds <- m2_glm_model %>%
+m2.odds <- m2_model %>%
   coef() %>%
   exp() 
-```
 
-95% Confidence Interval for odds
-
-```{r}
-m2_log_odds_interval <- confint(m2_glm_model)
+m2_log_odds_interval <- confint(m2_model)
 m2_odds_interval <- exp(m2_log_odds_interval) %>%
   kable()
 ```
 
-Plot
-
+Plot of odds 
 ```{r}
-m2_plot_odds <-plot_model(m2_glm_model, show.values = TRUE, axis.lim = c(1,1.5),
+m2_plot_odds <-plot_model(m2_model, show.values = TRUE, axis.lim = c(1,1.5),
            title = "Odds", show.p = FALSE)
 ```
 
 Adding the estimates of the odds to our data set
-
 ```{r}
-imdb_data <- imdb_data %>%
-  mutate(odds.1=exp(logodds.1))
+imdb_data_m2 <- imdb_data_m2 %>%
+  mutate(odds.m2=exp(logodds.m2))
 ```
 
 Probabilities add the probabilities to our data, which is done using the fitted() function:
-
 ```{r}
-imdb_data <- imdb_data %>%
-  mutate(probs.1=fitted(m2_glm_model))
+imdb_data_m2 <- imdb_data %>%
+  mutate(probs.m2=fitted(m2_model))
 ```
 
 Plot the Probability being Rating greater than 7
-
 ```{r}
-plot_model(m2_glm_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
+plot_model(m2_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
 ```
+
+**Residual Plots**
+```{r}
+# Calculate residuals
+dresiduals_m2 <- resid(m2_model, type = "deviance")
+pfitted_m2 <- predict(m2_model, type = "response")
+
+# Create a data frame for plotting
+residual_data_m2 <- data.frame(Fitted = pfitted_m2, DevianceResiduals = dresiduals_m2)
+
+# Plot scatter plot
+ggplot(residual_data_m2, aes(x = Fitted, y = DevianceResiduals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(x = "Fitted Values", y = "Deviance Residuals",
+       title = "Scatter Plot of Deviance Residuals vs Fitted Values")
+```
+
 
 ## Model Checking and Diagnostics (#Sec-mcd)
 
 ### Model Selection {#Sec-ms}
+
 ```{r}
-saturated_glm_model <- glm(high_rating ~ year + length + budget + log_votes + genre, 
+m0_model <- glm(high_rating ~ year + length + budget + log_votes + genre, 
                            data = imdb_data, family = binomial(link = "logit"))
-m1_glm_model <- glm(high_rating ~ length + budget + log_votes + genre, 
+m1_model <- glm(high_rating ~ year + length + budget + genre, 
                     data = imdb_data, family = binomial(link = "logit"))
-m2_glm_model <- glm(high_rating ~ length + budget + genre, 
+m2_model <- glm(high_rating ~ length + budget + genre, 
                     data = imdb_data, family = binomial(link = "logit"))
 ```
 
 ```{r}
 # 1. Likelihood Ratio Chi-Squared Statistic Test
-lr_test_m1 <- anova(saturated_glm_model, m1_glm_model, test = "Chisq")
-lr_test_m2 <- anova(saturated_glm_model, m2_glm_model, test = "Chisq")
+lr_test_m1 <- anova(m0_model, m1_model, test = "Chisq") # implies log_votes is not significantly associated with the outcome (p>0.05) therefore m1_model better than m0_model
+lr_test_m2 <- anova(m0_model, m2_model, test = "Chisq") # p <0.05 
 
 # 2. AIC
-aic_values <- AIC(saturated_glm_model, m1_glm_model, m2_glm_model)
+aic_values <- AIC(m0_model, m1_model, m2_model) # lowest for m1_model
 
 # 3. BIC
-bic_values <- BIC(saturated_glm_model, m1_glm_model, m2_glm_model)
-
+bic_values <- BIC(m0_model, m1_model, m2_model) # lowest for m2_model
 
 ```
 
+**Goodness of Fit**
 ```{r}
 # 4. Residuals (e.g., deviance residuals)
 # Saturated Model
-dres.sat <- resid(saturated_glm_model, type="deviance") # Deviance Residuals
-pres.sat <- resid(saturated_glm_model, type="pearson") #Pearson Residuals
-pred.sat <- predict(saturated_glm_model, type="response") #Fitted probabilities
+dres.sat <- resid(m0_model, type="deviance") # Deviance Residuals
+pres.sat <- resid(m0_model, type="pearson") #Pearson Residuals
+pred.sat <- predict(m0_model, type="response") #Fitted probabilities
 d.sat <- data.frame (pred.sat=pred.sat, dres.sat=dres.sat, pres.sat=pres.sat)
 
 g1 <- ggplot(d.sat, aes(x=pred.sat, y=dres.sat))+
   geom_point()
 
 # Model 1
-dres.m1 <- resid(m1_glm_model, type="deviance") # Deviance Residuals
-pres.m1 <- resid(m1_glm_model, type="pearson") #Pearson Residuals
-pred.m1 <- predict(m1_glm_model, type="response") #Fitted probabilities
+dres.m1 <- resid(m1_model, type="deviance") # Deviance Residuals
+pres.m1 <- resid(m1_model, type="pearson") #Pearson Residuals
+pred.m1 <- predict(m1_model, type="response") #Fitted probabilities
 d.m1 <- data.frame (pred.m1=pred.m1, dres.m1=dres.m1, pres.m1=pres.m1)
 
 g2 <- ggplot(d.m1, aes(x=pred.m1, y=dres.m1))+
   geom_point()
 
 # Model 2
-dres.m2 <- resid(m2_glm_model, type="deviance") # Deviance Residuals
-pres.m2 <- resid(m2_glm_model, type="pearson") #Pearson Residuals
-pred.m2 <- predict(m2_glm_model, type="response") #Fitted probabilities
-d.m2 <- data.frame (ppred.m2=pred.m2, dres.m2=dres.m2, pres.m2=pres.m2)
+dres.m2 <- resid(m2_model, type="deviance") # Deviance Residuals
+pres.m2 <- resid(m2_model, type="pearson") #Pearson Residuals
+pred.m2 <- predict(m2_model, type="response") #Fitted probabilities
+d.m2 <- data.frame (pred.m2=pred.m2, dres.m2=dres.m2, pres.m2=pres.m2)
 
 g3 <- ggplot(d.m2, aes(x=pred.m2, y=dres.m2))+
   geom_point()
