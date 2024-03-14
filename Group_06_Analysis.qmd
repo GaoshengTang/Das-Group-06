@@ -56,8 +56,10 @@ A check for missing values is conducted and it is found that 103 observations ar
 ```{r}
 #| label: tbl-median-length
 #| tbl-cap: Median length by genre.
+#| echo: true
 # Check for missing values
-missing_values <- colSums(is.na(imdb_data)) # 103 values are missing from the column length
+missing_values <- colSums(is.na(imdb_data)) 
+# 103 values are missing from the column length
 
 median_length <- median(imdb_data$length, na.rm = TRUE) # median is 90 minutes
 
@@ -130,6 +132,7 @@ The variables in @tbl-glimpse-dataset
 ```{r}
 #| label: tbl-summary-statistics
 #| tbl-cap: Summary statistics on the IMDB data by variables.
+#| echo: true
 summary_year <- imdb_data %>%
   summarise('Variables'="year",
             'Mean' = mean(year),
@@ -176,7 +179,8 @@ summary_rating <- imdb_data %>%
             'IQR' = quantile(rating,0.75)-quantile(rating,0.25),
             'Sample_size' = n())
 
-combined_summary <- bind_rows(summary_year, summary_length, summary_budget, summary_votes, summary_rating)
+combined_summary <- bind_rows(summary_year, summary_length, summary_budget,
+                              summary_votes, summary_rating)
 combined_summary |>
   gt() |>
   fmt_number(decimals=2) |>
@@ -200,7 +204,7 @@ The @tbl-summary-statistics shows that the summary for the columns year, length,
 
 • For variable budget, the budget of films is from 3.2 (\$1000000s) to 21.2 (\$1000000s).The median budget of a film is 12(\$1000000s).
 
-• For variable votes, the votes of films ranges from 5 to 103,854 which suggests large variation. It can be observed the IQR is relatively large as well.
+• For variable votes, the votes of films ranges from 5 to 103,854 which suggests large variation. It can be observed the IQR is relatively large as well.\clearpage
 
 ## Correlation {#sec-cor}
 
@@ -211,9 +215,9 @@ The @tbl-summary-statistics shows that the summary for the columns year, length,
 #| fig-width: 7
 #| fig-height: 6
 #| message: false
-scatterplot_matrix <- ggpairs(imdb_data[, c("rating","year", "budget",  "length", "votes")], 
-                              title="Scatterplot matrix")
-scatterplot_matrix
+ggpairs(imdb_data[, c("rating","year", "budget",  "length", "votes")], aes(color=imdb_data$rate), title="Scatterplot matrix")+
+  theme_bw()
+  
 ```
 
 The @fig-scatterplot-matrix shows weak correlation between the variables.
@@ -232,38 +236,32 @@ The @fig-scatterplot-matrix shows weak correlation between the variables.
 
 rating_plot <- ggplot(data=imdb_data, mapping=aes(x=rating))+
   geom_histogram(color = "black",fill="skyblue")+
-  labs(x = "Rating", y = "Count")+
   theme_bw()
 
 year_plot <- ggplot(data=imdb_data, mapping=aes(x=year))+
   geom_histogram(color = "black",fill="skyblue")+
-  labs(x = "Year", y = "Count")+
   theme_bw()
 
 length_plot <- ggplot(data=imdb_data, mapping=aes(x=length))+
   geom_histogram(color = "black",fill="skyblue")+
-  labs(x = "Length", y = "Count")+
   theme_bw()
 
 budget_plot <- ggplot(data=imdb_data, mapping=aes(x=budget))+
   geom_histogram(color = "black",fill="skyblue")+
-  labs(x = "Budget", y = "Count")+
   theme_bw()
 
 votes_plot <- ggplot(data=imdb_data, mapping=aes(x=votes))+
   geom_histogram(color = "black",fill="skyblue")+
-  labs(x = "Votes", y = "Count")+
   theme_bw()
 
 log_votes_plot <- ggplot(data=imdb_data, mapping=aes(x=log(votes)))+
   geom_histogram(color = "black",fill="skyblue")+
-  labs(x = "Votes(log)", y = "Count")+
   theme_bw()
 
 grid.arrange(rating_plot,year_plot,budget_plot,length_plot,votes_plot, log_votes_plot, ncol=2)
 ```
 
-The @fig-histograms shows that the data structures follow exponential distributions. The variable 'votes' displays skewness due to large difference in values of maximum and minimum values. To reduce this skewness and facilitate more robust analysis, a logarithmic transformation is used. \clearpage
+The @fig-histograms shows that the data structures follow exponential distributions. The variable 'votes' displays skewness due to large difference in values of maximum and minimum values. To reduce this skewness and facilitate more robust analysis, a logarithmic transformation is used.
 
 ```{r}
 #Add a new column#
@@ -283,30 +281,31 @@ Scatterplot to understand the relationship between rating and four variables(yea
 #| message: false
 s1 <- ggplot(data=imdb_data, aes(x = year, y = rating, color = rate))+
   geom_point(size=0.5)+
-  labs(x = "Year", y = "Rating")+
-  theme_bw()
+  theme_bw()+
+  theme(legend.position = "none") 
 
 s2 <- ggplot(data=imdb_data, aes(x = length, y = rating, color = rate))+
   geom_point(size=0.5)+
-  labs(x = "Length", y = "Rating")+
-  theme_bw()
+  theme_bw()+
+  theme(legend.position = "none") 
 
 s3 <- ggplot(data=imdb_data, aes(x = budget, y = rating, color = rate))+
   geom_point(size=0.5)+
-  labs(x = "Budget", y = "Rating")+
-  theme_bw()
+  theme_bw()+
+  theme(legend.position = "none") 
 
 s4 <- ggplot(data=imdb_data, aes(x = log_votes , y = rating, color = rate))+
   geom_point(size=0.5)+
-  labs(x = "Votes(log)", y = "Rating")+
-  theme_bw()
+  theme_bw()+
+  theme(legend.position = "none") 
 
-# ggarrange(s1,s2,s3,s4,ncol = 2, nrow=2, common.legend = T, legend = "bottom")
+ggarrange(s1,s2,s3,s4,ncol = 2, nrow=2, common.legend = T, legend = "bottom")
 
-grid.arrange(s1,s2,s3,s4,ncol = 2)
+
+#grid.arrange(s1,s2,s3,s4,ncol = 2)
 ```
 
-The @fig-scatterplots-relationship suggests that there seems to be no linear relationship between the response variable and the explanatory variables which justifies the weak correlation observed earlier.
+The @fig-scatterplots-relationship suggests that there seems to be no linear relationship between the response variable and the explanatory variables which justifies the weak correlation observed earlier.\clearpage
 
 ### Boxplot for genre
 
@@ -318,7 +317,6 @@ The @fig-scatterplots-relationship suggests that there seems to be no linear rel
 #| message: false
 ggplot(data =imdb_data, mapping = aes(x = genre, y = rating)) +
   geom_boxplot(fill="skyblue")+
-  labs(x = "Genre", y = "Rating")+
   theme_bw()
 ```
 
@@ -339,7 +337,6 @@ The @fig-boxplot-ratings distribution of rating genre wise. Outliers for ratings
 ggplot(data = imdb_data, aes(x = rate, y = length,fill=rate) )+
   geom_boxplot() +
   theme_bw()+
-  labs(x = "Rating", y = "Length")+
   theme(legend.position = "none") 
 
 length_outliers <- imdb_data %>%
@@ -356,6 +353,7 @@ group_by(rate) %>%
 #| label: tbl-summary-length
 #| tbl-cap: Summary statistics on length by rating.
 #| tbl-colwidths: [60,40]
+#| echo: true
 table=imdb_data %>%
   group_by(rate) %>%
   summarise('Mean' = mean(length),
@@ -380,7 +378,7 @@ table|>
   )
 ```
 
-The @tbl-summary-length The median length film with 'Rating greater than 7' is (73 minutes) lower than that with 'Rating less than 7' (95.74 minutes).
+The @tbl-summary-length The median length film with 'Rating greater than 7' is (73 minutes) lower than that with 'Rating less than 7' (95.74 minutes).\clearpage
 
 ### Variable 2 : budget
 
@@ -393,7 +391,6 @@ The @tbl-summary-length The median length film with 'Rating greater than 7' is (
 #boxplot
 ggplot(data = imdb_data, aes(x = rate, y = budget,fill=rate) )+
   geom_boxplot() +
-  labs(x="Rating", y = "Budget")+
   theme_bw()+
   theme(legend.position = "none") 
 
@@ -410,6 +407,7 @@ group_by(rate) %>%
 ```{r}
 #| label: tbl-summary-budget
 #| tbl-cap: Summary statistics on budget by rating.
+#| echo: true
 table=imdb_data %>%
   group_by(rate) %>%
   summarise('Mean' = mean(budget),
@@ -445,7 +443,6 @@ The @tbl-summary-budget shows that the mean and median for 'Rating greater than 
 #| message: false
 ggplot(data = imdb_data, aes(x = rate, y = log_votes,fill=rate) )+
   geom_boxplot() +
-  labs(x = "Rating", y = "Votes(log)")+
   theme_bw()+
   theme(legend.position = "none")
 
@@ -462,6 +459,7 @@ log_votes_outliers <- imdb_data %>%
 ```{r}
 #| label: tbl-summary-logvotes
 #| tbl-cap: Summary statistics of votes(log) by rating.
+#| echo: true
 table=imdb_data %>%
   group_by(rate) %>%
   summarise('Mean' = mean(log_votes),
@@ -493,7 +491,7 @@ The @tbl-summary-logvotes shows that the mean and median for 'Rating greater tha
 The ratio of ratings above 7 to ratings below 7 and sample sizes for each type
 
 ```{r}
-#| label: tbl-7
+#| label: tbl-summary-genre
 #| tbl-cap: Summary statistics of genre
 library(janitor)
 
@@ -527,7 +525,6 @@ It can be seen the size for the genre 'Romance' is only 20, which is comparative
 #| message: false
 ggplot(imdb_data, aes(x = genre, fill = rate)) +
    geom_bar(position = "dodge", stat = "count")+
-   labs(x = "Genre", y = "Count")+
   theme_bw()+
   theme(legend.position = "bottom") 
 ```
