@@ -826,6 +826,7 @@ Plot the Probability being Rating greater than 7
 ```{r}
 plot_model(m1_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
 ```
+It has been find that the probabilities about rating greater than7 decrease by length in terms of the length of the horizontal coordinate. Besides, we also can see that the green line over the blue line, and the blue line over red one. Therefore, it is a conclusion that the probabilities about greater than7 decrease by budget.
 
 **Residual Plots**
 ```{r}
