@@ -548,6 +548,7 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
 # Formal Data Analysis {#sec-Formal}
 
 ## Fitting the Model {#sec-fm}
+
 Baseline category for our binary response high_rating is 0
 
 ```{r}
@@ -586,129 +587,37 @@ print(m0_coefficients_table)
 
 Baseline category for explanatory variable 'genre' is "Action".
 
-Wald Statistic Z
-```{r}
-p_values_m0 <- Anova(m0_model, type = 3, 
-           test.statistic = "Wald")
-print(p_values_m0)
-```
+**Variable Selection** log_votes has a p-value of 0.7597. This suggests that there this variable should be included in the model.
 
-log_votes is not statistically significant with a p-value of 0.949925. This suggests that there is insufficient evidence to reject the null hypothesis that the number of votes received by viewers has no effect on the probability of a film being rated as high_rating.
-
-We can look what happens to the residual deviance as we add each term by using anova(m0_model)
+**Hypothesis Testing** Since log-votes has p-value \> 0.05, it is not statistically significant and does not contribute in explaining the variation in the response variable.
 
 **Analysis of Deviance Table**
+
 ```{r}
-anova(m0_model)
+d0 <- anova(m0_model) %>%
+  kable()
 ```
 
-Each row in the table represents a term (predictor variable) added to the model.
+Each row in the table represents a term (predictor variable) added to the model. It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. A model without 'year' and 'log_votes' could be tried.
 
-It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. We could try a model without 'year' and 'log_votes' as the resulting reduction in deviance is smaller than 95th percentile. year":
-
-The change in deviance (3.01) when adding the predictor variable "year" is not statistically significant (p-value \> 0.05), indicating that including "year" does not significantly improve the model fit.The change in deviance (3.26) when adding the predictor variable "log_votes" is not statistically significant (p-value \> 0.05), indicating that including "log_votes" does not significantly improve the model fit.
-
-The same conclusion can be reached if we compare residual deviance and the null deviance. The difference in deviance is 2463.5-1016.8=1446.7 which is much larger than the 95th percentile of a $\chi^2(1936-1926)$
+**Model is a good fit** The value of the deviance for this model is D = 1018. If the model is a good fit, the deviance should approximately follow the $\chi^2(1936-11)$ = $\chi^2(1926)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1936) minus the parameters in the model (11). The 95th percentile of the $\chi^2(1926)$ distribution is 2029.211. Since, 1018 \< 2029.211, there is no evidence of lack of fit.
 
 ```{r}
-2463.5-1016.8 # 1446.7
-qchisq(df=10, p=0.95) # 18.30704
-```
-
-**Model is a good fit**
-
-The value of the deviance for this model is D = 1016.8. If the model is a good fit, the deviance should approximately follow the $\chi^2(1937-11)$ = $\chi^2(1926)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1937) minus the parameters in the model (11). The 95th percentile of the $\chi^2(1926)$ distribution is 2029.211. Since, 1016.8 < 2029.211, there is no evidence of lack of fit.
-
-```{r}
-nrow(distinct(imdb_data, year, length, budget, log_votes, genre)) # 1937
-
+nrow(distinct(imdb_data, year, length, budget, log_votes, genre)) # 1936
 qchisq(df=1926, 0.95) # 2029.211
 ```
 
-
 **Assumptions**
+
+Residuals should be normally distributed Independence of observations Linearity of continuous explanatory variables and the log-odds outcome No multicollinearity - explanatory variables should not be highly correlated with each other
+
 ```{r}
-
+autoplot(m0_model)
 ```
-
-
-Log-odds & 95% confidence interval for these log-odds
-```{r}
-m0.coef <- round(coef(m0_model), 3)
-
-m0.logodds <- confint(m0_model) %>%
-  kable()
-```
-
-Plot of logodds
-```{r}
-library(sjPlot)
-m0_plot_logodds <- plot_model(m0_model, show.values = TRUE, transform = NULL,
-           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
-```
-
-Adding estimates of the log-odds to our data set
-```{r}
-imdb_data_m0 <- imdb_data %>%
-  mutate(logodds.m0=predict(m0_model))
-```
-
-Odds and 95% Confidence Interval for odds
-```{r}
-m0.odds <- m0_model %>%
-  coef() %>%
-  exp() 
-
-m0_log_odds_interval <- confint(m0_model)
-m0_odds_interval <- exp(m0_log_odds_interval) %>%
-  kable()
-```
-
-Plot of odds 
-```{r}
-m0_plot_odds <-plot_model(m0_model, show.values = TRUE, axis.lim = c(1,1.5),
-           title = "Odds", show.p = FALSE)
-```
-
-Adding the estimates of the odds to our data set
-```{r}
-imdb_data_m0 <- imdb_data_m0 %>%
-  mutate(odds.m0=exp(logodds.m0))
-```
-
-Probabilities add the probabilities to our data, which is done using the fitted() function:
-```{r}
-imdb_data_m0 <- imdb_data_m0 %>%
-  mutate(probs.m1=fitted(m0_model))
-```
-
-Plot the Probability being Rating greater than 7
-```{r}
-plot_model(m0_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
-```
-
-**Residual Plots**
-```{r}
-# Calculate residuals
-dresiduals_m0 <- resid(m0_model, type = "deviance")
-pfitted_m0 <- predict(m0_model, type = "response")
-
-# Create a data frame for plotting
-residual_data_m0 <- data.frame(Fitted = pfitted_m0, DevianceResiduals = dresiduals_m0)
-
-# Plot scatter plot
-ggplot(residual_data_m0, aes(x = Fitted, y = DevianceResiduals)) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(x = "Fitted Values", y = "Deviance Residuals",
-       title = "Scatter Plot of Deviance Residuals vs Fitted Values")
-```
-
 
 ### Model 1 {#sec-m1.model}
 
-start model:following equation referring to a logistic regression model
-$$ 
+start model:following equation referring to a logistic regression model $$ 
 \ln\left(\frac{p}{1-p}\right)=\alpha + \beta_1 \cdot \textrm{year}+\beta_2 \cdot \textrm{length}+\beta_3 \cdot \textrm{budget}+\beta_4 \cdot \textrm{log_votes}
 +\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(x)+\\
 \beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
@@ -716,19 +625,13 @@ $$
 \beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(x)+
 \beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(x)+
 \beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(x)
-$$
-$$\mathbb{I}_{\mbox{Genre}}(x)=\left\{
+$$ $$\mathbb{I}_{\mbox{Genre}}(x)=\left\{
                 \begin{array}{ll}
                   1 ~~~ \mbox{if genre of} ~ x \mbox{th observation is Genre},\\
                   0 ~~~ \mbox{Otherwise}.\\
                 \end{array}
               \right.\\
               Genre=\{Animation,Comedy,Documentary,Drama,RomanceShort\}$$
-```{r}
-# Backward stepping stepwise regression using AIC
-m1_model <- step(mod_0, direction="both", trace=FALSE)
-summary(m1_model)
-```
 
 ```{r}
 m1_model <- glm(high_rating ~ year + length + budget  + genre, 
@@ -753,155 +656,22 @@ print(m1_coefficients_table)
 
 ```
 
-Baseline category for explanatory variable 'genre' is "Action".
+**Variable Selection** All the estimates are statistically significant with a p-value \< 0.05. However, looking at residual deviance in table observe when adding the predictor variable "year" reduction in residual deviance is smallest.
+
+**Hypothesis Testing** Since p-values \> 0.05 for all the parameters, the predictors are statistically significant and contributes to explaining the variation in the response variable.
+
+**Model is a good fit** The value of the deviance for this model is D = 1018.1. If the model is a good fit, the deviance should approximately follow the $\chi^2(1927-10)$ = $\chi^2(1917)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1927) minus the parameters in the model (10). The 95th percentile of the $\chi^2(1926)$ distribution is 2019.972. Since, 1018.1 \< 2019.972, there is no evidence of lack of fit.
 
 ```{r}
-m0_coefs <- round(coef(m0_model), 2)
-```
+nrow(distinct(imdb_data, year, length, budget, genre)) # 1927
 
-Log-odds
-$$ 
-\ln\left(\frac{p}{1-p}\right)=-21+ 0.01 \cdot \textrm{year}-0.06 \cdot \textrm{length}+0.51 \cdot \textrm{budget}+0.00 \cdot \textrm{log_votes}
--0.55 \cdot\mathbb{I}_{\mbox{Animation}}(x)\\
-+3.06 \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
-5.05 \cdot \mathbb{I}_{\mbox{Document}}(x)
--1.61\cdot \mathbb{I}_{\mbox{Drama}}(x)
--2.16 \cdot \mathbb{I}_{\mbox{Romance}}(x)
-+3.55 \cdot \mathbb{I}_{\mbox{Short}}(x)
-$$
-$$\mathbb{I}_{\mbox{Genre}}(x)=\left\{
-                \begin{array}{ll}
-                  1 ~~~ \mbox{if genre of} ~ x \mbox{th observation is Genre},\\
-                  0 ~~~ \mbox{Otherwise}.\\
-                \end{array}
-              \right.\\
-              Genre=\{Animation,Comedy,Documentary,Drama,RomanceShort\}$$
-              
-#need analysis the formula
-
-odds
-```{r}
-exp_m0_coef<-round(exp(m0_coefs) , 2)
-exp_m0_coef
-```
-
-$$ 
-\frac{p}{1-p}=exp\{-21+ 0.01 \cdot \textrm{year}-0.06 \cdot \textrm{length}+0.51 \cdot \textrm{budget}+0.00 \cdot \textrm{log_votes}
--0.55 \cdot\mathbb{I}_{\mbox{Animation}}(x)\\
-+3.06 \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
-5.05 \cdot \mathbb{I}_{\mbox{Document}}(x)
--1.61\cdot \mathbb{I}_{\mbox{Drama}}(x)
--2.16 \cdot \mathbb{I}_{\mbox{Romance}}(x)
-+3.55 \cdot \mathbb{I}_{\mbox{Short}}(x)\}
-=.....
-Need to supplement
-$$
-also need analysis
-
-Wald Statistic Z
-```{r}
-p_values_m1 <- Anova(m1_model, type = 3, 
-           test.statistic = "Wald")
-print(p_values_m1)
-anova(m1_model)
-```
-
-All the estimates are statistically significant with a p-value < 0.05. However, looking at residual deviance observe when adding the predictor variable "year" reduction in residual deviance is smallest. 
-
-The same conclusion can be reached if we compare residual deviance and the null deviance. The difference in deviance is 2463.5-1016.8=1446.7 which is much larger than the 95th percentile of a $\chi^2(1936-1927)$
-
-```{r}
-2463.5-1016.9 # 1446.6
-qchisq(df=9, p=0.95) # 16.91898
-```
-
-**Model is a good fit**
-
-The value of the deviance for this model is D = 1016.9. If the model is a good fit, the deviance should approximately follow the $\chi^2(1932-10)$ = $\chi^2(1922)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1932) minus the parameters in the model (10). The 95th percentile of the $\chi^2(1922)$ distribution is 2025.105. Since, 1016.9 < 2025.105, there is no evidence of lack of fit.
-
-```{r}
-nrow(distinct(imdb_data, year, length, budget, genre)) # 1932
-
-qchisq(df=1922, 0.95) # 2025.105
+qchisq(df=1917, 0.95) # 2019.972
 ```
 
 **Assumptions**
 
 ```{r}
-
-```
-
-Log-odds & 95% confidence interval for these log-odds
-```{r}
-m1.coef <- round(coef(m1_model), 3)
-
-m1.logodds <- confint(m1_model) %>%
-  kable()
-```
-
-Plot of logodds
-```{r}
-library(sjPlot)
-m1_plot_logodds <- plot_model(m1_model, show.values = TRUE, transform = NULL,
-           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
-```
-
-Adding estimates of the log-odds to our data set
-```{r}
-imdb_data_m1 <- imdb_data %>%
-  mutate(logodds.m1=predict(m1_model))
-```
-
-Odds and 95% Confidence Interval for odds
-```{r}
-m1.odds <- m1_model %>%
-  coef() %>%
-  exp() 
-
-m1_log_odds_interval <- confint(m1_model)
-m1_odds_interval <- exp(m1_log_odds_interval) %>%
-  kable()
-```
-
-Plot of odds 
-```{r}
-m1_plot_odds <-plot_model(m1_model, show.values = TRUE, axis.lim = c(1,1.5),
-           title = "Odds", show.p = FALSE)
-```
-
-Adding the estimates of the odds to our data set
-```{r}
-imdb_data_m1 <- imdb_data_m1 %>%
-  mutate(odds.m1=exp(logodds.m1))
-```
-
-Probabilities add the probabilities to our data, which is done using the fitted() function:
-```{r}
-imdb_data_m1 <- imdb_data_m1 %>%
-  mutate(probs.m1=fitted(m1_model))
-```
-
-Plot the Probability being Rating greater than 7
-```{r}
-plot_model(m1_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
-```
-It has been find that the probabilities about rating greater than7 decrease by length in terms of the length of the horizontal coordinate. Besides, we also can see that the green line over the blue line, and the blue line over red one. Therefore, it is a conclusion that the probabilities about greater than7 decrease by budget.
-
-**Residual Plots**
-```{r}
-# Calculate residuals
-dresiduals_m1 <- resid(m1_model, type = "deviance")
-pfitted_m1 <- predict(m1_model, type = "response")
-
-# Create a data frame for plotting
-residual_data_m1 <- data.frame(Fitted = pfitted_m1, DevianceResiduals = dresiduals_m1)
-
-# Plot scatter plot
-ggplot(residual_data_m1, aes(x = Fitted, y = DevianceResiduals)) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(x = "Fitted Values", y = "Deviance Residuals",
-       title = "Scatter Plot of Deviance Residuals vs Fitted Values")
+autoplot(m1_model)
 ```
 
 ### Model 2 {#sec-m2.model}
@@ -932,55 +702,33 @@ print(m2_coefficients_table)
 
 ```
 
+**Variable Selection** All the estimates are statistically significant with a p-value \< 0.05.
 
-Baseline category for explanatory variable 'genre' is "Action".
+**Hypothesis Testing** Since p-values \> 0.05 for all the parameters, the predictors are statistically significant and contributes to explaining the variation in the response variable.
 
-Wald Statistic Z
-```{r}
-p_values_m2 <- Anova(m2_model, type = 3, 
-           test.statistic = "Wald")
-print(p_values_m2)
-```
-
-All the estimates are statistically significant  with a p-value < 0.05. 
-
-**Analysis of Deviance Table**
-```{r}
-anova(m2_model) # model seems okay
-```
-
-The same conclusion can be reached if we compare residual deviance and the null deviance. The difference in deviance is 2463.5-1023.2= 1440.3 which is much larger than the 95th percentile of a $\chi^2(1936-1928)$
+**Model is a good fit** The value of the deviance for this model is D = 1025.2. If the model is a good fit, the deviance should approximately follow the $\chi^2(1928-9)$ = $\chi^2(1919)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1927) minus the parameters in the model (09). The 95th percentile of the $\chi^2(1919)$ distribution is 2022.026. Since, 1025.2 \< 2022.026, there is no evidence of lack of fit.
 
 ```{r}
-2463.5-1023.2 # 1446.7
-qchisq(df=8, p=0.95) # 15.50731
-```
-
-**Model is a good fit**
-
-The value of the deviance for this model is D = 1023.2. If the model is a good fit, the deviance should approximately follow the $\chi^2(1825-9)$ = $\chi^2(1816)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1825) minus the parameters in the model (9). The 95th percentile of the $\chi^2(1816)$ distribution is 1916.253. Since, 1023.2 < 1916.253, there is no evidence of lack of fit.
-
-```{r}
-nrow(distinct(imdb_data, length, budget, genre)) # 1825
-
-qchisq(df=1816, 0.95) # 1916.253
+nrow(distinct(imdb_data, year, length, budget, genre)) # 1927
+qchisq(df=1919, 0.95) # 2025.105
 ```
 
 **Assumptions**
 
 ```{r}
-
+autoplot(m2_model)
 ```
 
 Log-odds & 95% confidence interval for these log-odds
+
 ```{r}
 m2.coef <- round(coef(m2_model), 3)
-
 m2.logodds <- confint(m2_model) %>%
   kable()
 ```
 
 Plot of logodds
+
 ```{r}
 library(sjPlot)
 m2_plot_logodds <- plot_model(m2_model, show.values = TRUE, transform = NULL,
@@ -988,12 +736,14 @@ m2_plot_logodds <- plot_model(m2_model, show.values = TRUE, transform = NULL,
 ```
 
 Adding estimates of the log-odds to our data set
+
 ```{r}
 imdb_data_m2 <- imdb_data %>%
   mutate(logodds.m2=predict(m2_model))
 ```
 
 Odds and 95% Confidence Interval for odds
+
 ```{r}
 m2.odds <- m2_model %>%
   coef() %>%
@@ -1004,84 +754,59 @@ m2_odds_interval <- exp(m2_log_odds_interval) %>%
   kable()
 ```
 
-Plot of odds 
+Plot of odds
+
 ```{r}
 m2_plot_odds <-plot_model(m2_model, show.values = TRUE, axis.lim = c(1,1.5),
            title = "Odds", show.p = FALSE)
 ```
 
 Adding the estimates of the odds to our data set
+
 ```{r}
 imdb_data_m2 <- imdb_data_m2 %>%
   mutate(odds.m2=exp(logodds.m2))
 ```
 
 Probabilities add the probabilities to our data, which is done using the fitted() function:
+
 ```{r}
 imdb_data_m2 <- imdb_data %>%
   mutate(probs.m2=fitted(m2_model))
 ```
 
 Plot the Probability being Rating greater than 7
+
 ```{r}
 plot_model(m2_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
 ```
-
-**Residual Plots**
-```{r}
-# Calculate residuals
-dresiduals_m2 <- resid(m2_model, type = "deviance")
-pfitted_m2 <- predict(m2_model, type = "response")
-
-# Create a data frame for plotting
-residual_data_m2 <- data.frame(Fitted = pfitted_m2, DevianceResiduals = dresiduals_m2)
-
-# Plot scatter plot
-ggplot(residual_data_m2, aes(x = Fitted, y = DevianceResiduals)) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(x = "Fitted Values", y = "Deviance Residuals",
-       title = "Scatter Plot of Deviance Residuals vs Fitted Values")
-```
-
 
 ## Model Checking and Diagnostics (#Sec-mcd)
 
 ### Model Selection {#Sec-ms}
 
-```{r}
-m0_model <- glm(high_rating ~ year + length + budget + log_votes + genre, 
-                           data = imdb_data, family = binomial(link = "logit"))
-m1_model <- glm(high_rating ~ year + length + budget + genre, 
-                    data = imdb_data, family = binomial(link = "logit"))
-m2_model <- glm(high_rating ~ length + budget + genre, 
-                    data = imdb_data, family = binomial(link = "logit"))
-```
+1.  Likelihood Ratio Chi-Squared Statistic Test
 
 ```{r}
 # 1. Likelihood Ratio Chi-Squared Statistic Test
 lr_test_m1 <- anova(m0_model, m1_model, test = "Chisq") # implies log_votes is not significantly associated with the outcome (p>0.05) therefore m1_model better than m0_model
 lr_test_m2 <- anova(m0_model, m2_model, test = "Chisq") # p <0.05 
-
-summary(lr_test_m1)
-summary(lr_test_m2)
-
 ```
 
-Comparison of m1_model with m0_model shows that the change in Deviance is almost 0 (-0.003943) and Pr(>Chi) = 0.9499, suggesting that the removal of log_votes does not have a significant effect on the fit of the model. Therefore, m1_model maintains a similar fit to m0_model while simplifying the model, indicating that log_votes can be excluded.
-
-Comparing m2_model with m0_model, Deviance increased by 6.3609 and Pr(>Chi) = 0.04157, which is below the 0.05 significance level, indicating that deletion of the year and log_votes from the model, had a significant effect on the fit.
+2.  Residuals
 
 ```{r}
 # 2. Residuals (e.g., deviance residuals and Pearson_Residual)
 # Saturated Model
-dres.sat <- resid(m0_model, type="deviance") # Deviance Residuals
-pres.sat <- resid(m0_model, type="pearson") #Pearson Residuals
-pred.sat <- predict(m0_model, type="response") #Fitted probabilities
-d.sat <- data.frame (pred.sat=pred.sat, dres.sat=dres.sat, pres.sat=pres.sat)
+dres.m0 <- resid(m0_model, type="deviance") # Deviance Residuals
+pres.m0 <- resid(m0_model, type="pearson") #Pearson Residuals
+pred.m0 <- predict(m0_model, type="response") #Fitted probabilities
+d.m0 <- data.frame (pred.m0=pred.m0, dres.m0=dres.m0, pres.m0=pres.m0)
 
-g1 <- ggplot(d.sat, aes(x=pred.sat, y=dres.sat))+
-  geom_point()
+g1 <- ggplot(d.m0, aes(x=pred.m0, y=dres.m0))+
+  geom_point(color="red") +
+  labs(x="Fitted Probabilities", y="Deviance Residuals", title="mo_model")+
+  theme_minimal()
 
 # Model 1
 dres.m1 <- resid(m1_model, type="deviance") # Deviance Residuals
@@ -1090,7 +815,9 @@ pred.m1 <- predict(m1_model, type="response") #Fitted probabilities
 d.m1 <- data.frame (pred.m1=pred.m1, dres.m1=dres.m1, pres.m1=pres.m1)
 
 g2 <- ggplot(d.m1, aes(x=pred.m1, y=dres.m1))+
-  geom_point()
+  geom_point(color="green") +
+  labs(x="Fitted Probabilities", y="Deviance Residuals", title="m1_model")+
+  theme_minimal()
 
 # Model 2
 dres.m2 <- resid(m2_model, type="deviance") # Deviance Residuals
@@ -1099,49 +826,41 @@ pred.m2 <- predict(m2_model, type="response") #Fitted probabilities
 d.m2 <- data.frame (pred.m2=pred.m2, dres.m2=dres.m2, pres.m2=pres.m2)
 
 g3 <- ggplot(d.m2, aes(x=pred.m2, y=dres.m2))+
-  geom_point()
+  geom_point(color="blue")+
+  labs(x="Fitted Probabilities", y="Deviance Residuals", title="m2_model")+
+  theme_minimal()
 
-d.sat$Model <- 'm0_model'
+grid.arrange(g1, g2, g3, ncol=3)
+
+
+d.m0$Model <- 'm0_model'
 d.m1$Model <- 'm1_model'
 d.m2$Model <- 'm2_model'
+d.m1 <- d.m1 %>% rename(pred.m0=pred.m1, dres.m0=dres.m1, pres.m0=pres.m1)
+d.m2 <- d.m2 %>% rename(pred.m0=pred.m2, dres.m0=dres.m2, pres.m0=pres.m2)
+all_data <- rbind(d.m0, d.m1, d.m2)
 
-d.m1 <- d.m1 %>% rename(pred.sat=pred.m1, dres.sat=dres.m1, pres.sat=pres.m1)
-d.m2 <- d.m2 %>% rename(pred.sat=pred.m2, dres.sat=dres.m2, pres.sat=pres.m2)
-
-all_data <- rbind(d.sat, d.m1, d.m2)
-
-g <- ggplot(all_data, aes(x=pred.sat, y=dres.sat, color=Model)) +
-  geom_point() +
-  facet_wrap(~Model, scales="free") +
-  theme_minimal() +
-  labs(x="Fitted Probabilities", y="Deviance Residuals", title="Deviance Residuals Across Models")
-
-g
-
-comparison_table <- all_data %>%
+model_comparison_table <- all_data %>%
   group_by(Model) %>%
-  summarise(Mean_Deviance_Residual = mean(dres.sat),
-            Mean_Pearson_Residual = mean(pres.sat),
-            Mean_Fitted_Probabilities = mean(pred.sat))
-
-print(comparison_table)
-
+  summarise(Mean_Deviance_Residual = mean(dres.m0),
+            Mean_Pearson_Residual = mean(pres.m0),
+            Mean_Fitted_Probabilities = mean(pred.m0)) %>%
+  gt() %>%
+  tab_header(
+    title = "Model Comparison Table")
+print(model_comparison_table)
 ```
 
+A comparison of the [Mean Deviance Residual (MDR)]{.underline} all of the models fit the data well, with no significant difference.
 
-A comparison of the Mean Deviance Residual (MDR) shows that the three models do not differ much in their overall effectiveness in fitting the data, with mean values of -0.0470, -0.0469, and -0.0481, respectively. all of the models fit the data well, with no significant difference.
+[Mean Pearson Residual (MPR)]{.underline} varies slightly among the three models, with m0_model and m1_model having closer mean values and m2_model having the lowest mean value (-0.00991), suggesting that the m2_model may be a slightly better fit than the the other two models.
 
-The Mean Pearson Residual (MPR) varies slightly among the three models, with m0_model and m1_model having closer mean values (0.0106 and 0.0107), and m2_model having the lowest mean value (0.00198), suggesting that the m2_model may be a slightly better fit for a given data point than the the other two models. Nevertheless, these differences are very small.
+The mean value of [Mean Fitted Probabilities]{.underline} (0.332) is same across all models, suggesting that the average prediction probability of a film receiving 'Rating greater than 7' is consistent across models.
 
-The mean value of Mean Fitted Probabilities (0.332) is exactly the same across all models, suggesting that the average prediction probability of a film receiving a high rating is consistent across models.
-
-In summary, although m2_model shows a slight advantage on Pearson's residuals, model selection should further consider other factors. This includes the analysis of AIC and BIC values, which measure the loss of information and complexity of the model, and the AUC values and ROC curves, which assess the model's ability to classify at different levels of thresholds
-
+3.  ROC curve and AUC
 
 ```{r}
 # 3. ROC curve and AUC #
-library(pROC)
-
 # Predictive probability of the model
 preds_m0 <- predict(m0_model, type = "response")
 preds_m1 <- predict(m1_model, type = "response")
@@ -1157,14 +876,14 @@ auc_m0 <- auc(roc_m0)
 auc_m1 <- auc(roc_m1)
 auc_m2 <- auc(roc_m2)
 
-# Plotting the ROC curve
-plot(roc_m0, main="ROC Curves for Three Models", col="#CC0000")
-lines(roc_m1, col="#00CC00")
-lines(roc_m2, col="#0000CC")
+par(mfrow = c(1, 1))
 
-# Add Legend
+# Plotting the ROC curve
+plot(roc_m0, main="ROC Curves for Three Models", col="red")
+lines(roc_m1, col="green")
+lines(roc_m2, col="blue")
 legend("bottomright", legend=c("m0_model", "m1_model", "m2_model"),
-       col=c("#CC0000", "#00CC00", "#0000CC"), lwd=2)
+       col=c("red", "green", "blue"), lwd=2)
 
 # Print AUC values
 cat("AUC for m0_model:", auc_m0, "\n")
@@ -1172,31 +891,38 @@ cat("AUC for m1_model:", auc_m1, "\n")
 cat("AUC for m2_model:", auc_m2, "\n")
 
 ```
-Comparison of AUC values shows that all models have very high predictive performance, with AUC values above 0.95, implying that the models work well in distinguishing between highly rated and non-highly rated films. m0_model shows the best performance, but the difference with m1_model and m2_model is negligible, suggesting that there is little or no loss in prediction.
 
-Comparison of ROC curves, it can be observed from the figure that the ROC curves of the three models are very close to each other, almost overlapping, and all three curves are very tightly fitted to the upper left corner, indicating that all three models have good predictive ability This suggests that in terms of the balance between the sensitivity (true rate) and the specificity (false positive rate), these models have similar classification ability. This is also confirmed by the AUC values of the models, with m0_model having the highest AUC (0.9516448), but the differences with m1_model (0.9516406) and m2_model (0.9510545) are very slight.
+[Comparison of AUC values]{.underline} shows that all models have very high predictive performance, with AUC values most 0.95, implying that the models work well in distinguishing between 'Rating greater than 7' and 'Rating less than 7' films. m0_model shows the best performance, but the difference with m1_model and m2_model is negligible, suggesting that there is little or no loss in prediction.
+
+[Comparison of ROC curves]{.underline}, it can be observed from the figure that the ROC curves of the three models are very close to each other, almost overlapping, and all three curves are very tightly fitted to the upper left corner, indicating that all three models have good predictive ability This suggests that in terms of the balance between the sensitivity (true rate) and the specificity (false positive rate), these models have similar classification ability. This is also confirmed by the AUC values of the models, with m0_model having the highest AUC (0.9519078 ), but the differences with m1_model (0.9518664) and m2_model (0.9512197 ) are very slight.
+
+4.  AIC & BIC
 
 ```{r}
 # 4. AIC
-aic_values <- AIC(m0_model, m1_model, m2_model) # lowest for m1_model
-
+aic_values <- AIC(m0_model, m1_model, m2_model) # lowest for m1_model 
+aic_data <- data.frame(Model = c("m0_model", "m1_model", "m2_model"),                       aic_values) 
+table_aic <- aic_data %>%   
+  gt() %>%   
+  tab_header(title = "AIC Values for Models") 
+print(table_aic)
 ```
 
-Based on the AIC criterion for model selection, m1_model (with log_votes removed) provided the best fit to the data (AIC = 1036.845) while remaining a simple model, compared to m0_model with all variables included (AIC = 1038.841) and m2_model with year and log_votes removed (AIC = 1041.202). Therefore, m1_model is the preferred model, suggesting that the removal of the log_votes variable contributes to the efficiency of the model without significantly affecting its predictive ability.
+Based on the AIC criterion for model selection, m1_model (with log_votes removed) provided the best fit to the data (AIC = 1038.067) compared to m0_model with all variables included (AIC = 1039.973). Therefore, m1_model is the preferred model.
 
 ```{r}
-
 # 5. BIC
 bic_values <- BIC(m0_model, m1_model, m2_model) # lowest for m2_model
-
+bic_data <- data.frame(Model = c("m0_model", "m1_model", "m2_model"),
+                       bic_values)
+table_bic <- bic_data %>%
+  gt() %>%
+  tab_header(
+    title = "BIC Values for Models"
+  )
+print(table_bic)
 ```
 
-According to the BIC criterion, the m0_model shows the highest BIC value (1100.099), suggesting that this model may not be the most preferred choice. m2_model has a slightly lower BIC (BIC = 1091.322), suggesting that it is a better choice in a statistical perspective. However, considering the significance of the YEAR variable, choosing the m1_model (BIC = 1092.534) that retains the YEAR variable may be a more reasonable decision. This better keeps the validity and explanatory power of the model.
-
-**Goodness of Fit**
-
-
+According to the BIC criterion, the m0_model shows the highest BIC value (1101.231), suggesting that this model may not be the most preferred choice. m1_model has a lowest BIC (BIC = 1093.290), suggesting that it is a better choice in a statistical perspective.
 
 # Conclusions {#sec-Conc}
-
-To summarise, we can conclude that m1_model is the best choice of the three models. It provides a model that is both effective and concise by simplifying the model (removing the log_votes variable) without significantly affecting the predictive power of the model. m1_model maintains a high level of accuracy in predicting high ratings, while improving the model's explanatory power by reducing the number of model parameters. Therefore, we recommend using m1_model as a model for predicting whether a film in the IMDb dataset will receive a high rating. In practice, the model is not only effective in making predictions, but its simplicity helps to understand the key factors affecting film ratings.
