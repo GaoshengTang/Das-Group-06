@@ -707,7 +707,23 @@ ggplot(residual_data_m0, aes(x = Fitted, y = DevianceResiduals)) +
 
 ### Model 1 {#sec-m1.model}
 
-Insert Latex Equation
+start model:following equation referring to a logistic regression model
+$$ 
+\ln\left(\frac{p}{1-p}\right)=\alpha + \beta_1 \cdot \textrm{year}+\beta_2 \cdot \textrm{length}+\beta_3 \cdot \textrm{budget}+\beta_4 \cdot \textrm{log_votes}
++\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(x)+\\
+\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
+\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(x)+
+\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(x)+
+\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(x)+
+\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(x)
+$$
+$$\mathbb{I}_{\mbox{Genre}}(x)=\left\{
+                \begin{array}{ll}
+                  1 ~~~ \mbox{if genre of} ~ x \mbox{th observation is Genre},\\
+                  0 ~~~ \mbox{Otherwise}.\\
+                \end{array}
+              \right.\\
+              Genre=\{Animation,Comedy,Documentary,Drama,RomanceShort\}$$
 ```{r}
 # Backward stepping stepwise regression using AIC
 m1_model <- step(mod_0, direction="both", trace=FALSE)
@@ -738,6 +754,49 @@ print(m1_coefficients_table)
 ```
 
 Baseline category for explanatory variable 'genre' is "Action".
+
+```{r}
+m0_coefs <- round(coef(m0_model), 2)
+```
+
+Log-odds
+$$ 
+\ln\left(\frac{p}{1-p}\right)=-21+ 0.01 \cdot \textrm{year}-0.06 \cdot \textrm{length}+0.51 \cdot \textrm{budget}+0.00 \cdot \textrm{log_votes}
+-0.55 \cdot\mathbb{I}_{\mbox{Animation}}(x)\\
++3.06 \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
+5.05 \cdot \mathbb{I}_{\mbox{Document}}(x)
+-1.61\cdot \mathbb{I}_{\mbox{Drama}}(x)
+-2.16 \cdot \mathbb{I}_{\mbox{Romance}}(x)
++3.55 \cdot \mathbb{I}_{\mbox{Short}}(x)
+$$
+$$\mathbb{I}_{\mbox{Genre}}(x)=\left\{
+                \begin{array}{ll}
+                  1 ~~~ \mbox{if genre of} ~ x \mbox{th observation is Genre},\\
+                  0 ~~~ \mbox{Otherwise}.\\
+                \end{array}
+              \right.\\
+              Genre=\{Animation,Comedy,Documentary,Drama,RomanceShort\}$$
+              
+#need analysis the formula
+
+odds
+```{r}
+exp_m0_coef<-round(exp(m0_coefs) , 2)
+exp_m0_coef
+```
+
+$$ 
+\frac{p}{1-p}=exp\{-21+ 0.01 \cdot \textrm{year}-0.06 \cdot \textrm{length}+0.51 \cdot \textrm{budget}+0.00 \cdot \textrm{log_votes}
+-0.55 \cdot\mathbb{I}_{\mbox{Animation}}(x)\\
++3.06 \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
+5.05 \cdot \mathbb{I}_{\mbox{Document}}(x)
+-1.61\cdot \mathbb{I}_{\mbox{Drama}}(x)
+-2.16 \cdot \mathbb{I}_{\mbox{Romance}}(x)
++3.55 \cdot \mathbb{I}_{\mbox{Short}}(x)\}
+=.....
+Need to supplement
+$$
+also need analysis
 
 Wald Statistic Z
 ```{r}
