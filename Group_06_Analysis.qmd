@@ -305,7 +305,7 @@ ggarrange(s1,s2,s3,s4,ncol = 2, nrow=2, common.legend = T, legend = "bottom")
 #grid.arrange(s1,s2,s3,s4,ncol = 2)
 ```
 
-The @fig-scatterplots-relationship suggests that there seems to be no linear relationship between the response variable and the explanatory variables which justifies the weak correlation observed earlier.\clearpage
+The @fig-scatterplots-relationship suggests that there seems to be no linear relationship between the response variable and the explanatory variables which justifies the weak correlation observed earlier.
 
 ### Outliers
 
