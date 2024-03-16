@@ -307,95 +307,6 @@ ggarrange(s1,s2,s3,s4,ncol = 2, nrow=2, common.legend = T, legend = "bottom")
 
 The @fig-scatterplots-relationship suggests that there seems to be no linear relationship between the response variable and the explanatory variables which justifies the weak correlation observed earlier.
 
-### Outliers
-
-It can be observed from the scatterplot that there are outliers present especially for length and votes. Then extreme outlier values are replaced by threshold values corresponding to specific percentiles
-
--   length - 10th and 90th percentiles
-
--   budget- 5th percentile and 95th percentile
-
--   log_votes- Since logarithmic transformation had already removed a considerable amount of outlier, the threshold was set to 10th and 90th percentiles
-
-This replacement strategy aims to mitigate the impact of outliers on the analysis while retaining the overall distribution of the data. The approach ensures that extreme values are transformed to less extreme values, thereby improving the robustness of subsequent statistical analyses.
-
-```{r}
-# Length
-length_outliers <- imdb_data %>%
-group_by(rate) %>%
-  mutate(is_outlier = length > quantile(length, 0.75) + 1.5 * IQR(length) |
-           length < quantile(length, 0.25) - 1.5 * IQR(length)) %>%
-  filter(is_outlier) %>%
-  ungroup() %>%
-  arrange(length) # 97 outliers
-
-percentiles_length <- imdb_data %>%
-  summarise(q10 = quantile(length, 0.10),
-            q90 = quantile(length, 0.90)) #q10 = 15, q90 = 112
-imdb_data <- imdb_data %>%
-  mutate(length = ifelse(length < percentiles_length$q10, percentiles_length$q10, 
-                         ifelse(length > percentiles_length$q90, percentiles_length$q90, length)))
-
-length_outliers <- imdb_data %>%
-group_by(rate) %>%
-  mutate(is_outlier = length > quantile(length, 0.75) + 1.5 * IQR(length) |
-           length < quantile(length, 0.25) - 1.5 * IQR(length)) %>%
-  filter(is_outlier) %>%
-  ungroup() %>%
-  arrange(length) # 40 Observations
-
-# Budget
-budget_outliers <- imdb_data %>%
-group_by(rate) %>%
-  mutate(is_outlier = budget > quantile(budget, 0.75) + 1.5 * IQR(budget) |
-           budget < quantile(budget, 0.25) - 1.5 * IQR(budget)) %>%
-  filter(is_outlier) %>%
-  ungroup() %>%
-  arrange(budget) #9 outliers
-
-percentiles_budget <- imdb_data %>%
-  summarise(q05 = quantile(budget, 0.05),
-            q95 = quantile(budget, 0.95)) #q10 = 7.2, q90 = 16.82
-imdb_data <- imdb_data %>%
-  mutate(budget = ifelse(budget < percentiles_budget$q05, percentiles_budget$q05, 
-                         ifelse(budget > percentiles_budget$q95, percentiles_budget$q95, budget)))
-
-budget_outliers <- imdb_data %>%
-group_by(rate) %>%
-  mutate(is_outlier = budget > quantile(budget, 0.75) + 1.5 * IQR(budget) |
-           budget < quantile(budget, 0.25) - 1.5 * IQR(budget)) %>%
-  filter(is_outlier) %>%
-  ungroup() %>%
-  arrange(budget) #No outliers
-
-# log_votes
-log_votes_outliers <- imdb_data %>%
-  group_by(rate) %>%
-  mutate(is_outlier = log_votes > quantile(log_votes, 0.75) + 1.5 * IQR(log_votes) |
-           log_votes < quantile(log_votes, 0.25) - 1.5 * IQR(log_votes)) %>%
-  filter(is_outlier) %>%
-  ungroup() %>%
-  arrange(log_votes) # 59 outliers
-
-percentiles_log_votes <- imdb_data %>%
-  summarise(q10 = quantile(log_votes, 0.10),
-            q90 = quantile(log_votes, 0.90)) #q10 = 1.94591, q90 = 6.320768
-
-imdb_data <- imdb_data %>%
-  mutate(log_votes = ifelse(log_votes < percentiles_log_votes$q10, percentiles_log_votes$q10, 
-                            ifelse(log_votes > percentiles_log_votes$q90, percentiles_log_votes$q90, log_votes))) # Replace log_votes outliers
-
-# Identify outliers in log_votes again
-log_votes_outliers <- imdb_data %>%
-  group_by(rate) %>%
-  mutate(is_outlier = log_votes > quantile(log_votes, 0.75) + 1.5 * IQR(log_votes) |
-           log_votes < quantile(log_votes, 0.25) - 1.5 * IQR(log_votes)) %>%
-  filter(is_outlier) %>%
-  ungroup() %>%
-  arrange(log_votes) # No outliers
-
-```
-
 ### Boxplot for genre
 
 ```{r}
@@ -599,9 +510,95 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
   theme_bw()+
   theme(legend.position = "bottom") 
 ```
-
 The @fig-dodgedbarplot-genre supports the table above.
 
+## Outliers
+
+It can be observed from the scatterplot that there are outliers present especially for length and votes. Then extreme outlier values are replaced by threshold values corresponding to specific percentiles
+
+-   length - 10th and 90th percentiles
+
+-   budget- 5th percentile and 95th percentile
+
+-   log_votes- Since logarithmic transformation had already removed a considerable amount of outlier, the threshold was set to 10th and 90th percentiles
+
+This replacement strategy aims to mitigate the impact of outliers on the analysis while retaining the overall distribution of the data. The approach ensures that extreme values are transformed to less extreme values, thereby improving the robustness of subsequent statistical analyses.
+
+```{r}
+# Length
+length_outliers <- imdb_data %>%
+group_by(rate) %>%
+  mutate(is_outlier = length > quantile(length, 0.75) + 1.5 * IQR(length) |
+           length < quantile(length, 0.25) - 1.5 * IQR(length)) %>%
+  filter(is_outlier) %>%
+  ungroup() %>%
+  arrange(length) # 97 outliers
+
+percentiles_length <- imdb_data %>%
+  summarise(q10 = quantile(length, 0.10),
+            q90 = quantile(length, 0.90)) #q10 = 15, q90 = 112
+imdb_data <- imdb_data %>%
+  mutate(length = ifelse(length < percentiles_length$q10, percentiles_length$q10, 
+                         ifelse(length > percentiles_length$q90, percentiles_length$q90, length)))
+
+length_outliers <- imdb_data %>%
+group_by(rate) %>%
+  mutate(is_outlier = length > quantile(length, 0.75) + 1.5 * IQR(length) |
+           length < quantile(length, 0.25) - 1.5 * IQR(length)) %>%
+  filter(is_outlier) %>%
+  ungroup() %>%
+  arrange(length) # 40 Observations
+
+# Budget
+budget_outliers <- imdb_data %>%
+group_by(rate) %>%
+  mutate(is_outlier = budget > quantile(budget, 0.75) + 1.5 * IQR(budget) |
+           budget < quantile(budget, 0.25) - 1.5 * IQR(budget)) %>%
+  filter(is_outlier) %>%
+  ungroup() %>%
+  arrange(budget) #9 outliers
+
+percentiles_budget <- imdb_data %>%
+  summarise(q05 = quantile(budget, 0.05),
+            q95 = quantile(budget, 0.95)) #q10 = 7.2, q90 = 16.82
+imdb_data <- imdb_data %>%
+  mutate(budget = ifelse(budget < percentiles_budget$q05, percentiles_budget$q05, 
+                         ifelse(budget > percentiles_budget$q95, percentiles_budget$q95, budget)))
+
+budget_outliers <- imdb_data %>%
+group_by(rate) %>%
+  mutate(is_outlier = budget > quantile(budget, 0.75) + 1.5 * IQR(budget) |
+           budget < quantile(budget, 0.25) - 1.5 * IQR(budget)) %>%
+  filter(is_outlier) %>%
+  ungroup() %>%
+  arrange(budget) #No outliers
+
+# log_votes
+log_votes_outliers <- imdb_data %>%
+  group_by(rate) %>%
+  mutate(is_outlier = log_votes > quantile(log_votes, 0.75) + 1.5 * IQR(log_votes) |
+           log_votes < quantile(log_votes, 0.25) - 1.5 * IQR(log_votes)) %>%
+  filter(is_outlier) %>%
+  ungroup() %>%
+  arrange(log_votes) # 59 outliers
+
+percentiles_log_votes <- imdb_data %>%
+  summarise(q10 = quantile(log_votes, 0.10),
+            q90 = quantile(log_votes, 0.90)) #q10 = 1.94591, q90 = 6.320768
+
+imdb_data <- imdb_data %>%
+  mutate(log_votes = ifelse(log_votes < percentiles_log_votes$q10, percentiles_log_votes$q10, 
+                            ifelse(log_votes > percentiles_log_votes$q90, percentiles_log_votes$q90, log_votes))) # Replace log_votes outliers
+
+# Identify outliers in log_votes again
+log_votes_outliers <- imdb_data %>%
+  group_by(rate) %>%
+  mutate(is_outlier = log_votes > quantile(log_votes, 0.75) + 1.5 * IQR(log_votes) |
+           log_votes < quantile(log_votes, 0.25) - 1.5 * IQR(log_votes)) %>%
+  filter(is_outlier) %>%
+  ungroup() %>%
+  arrange(log_votes) # No outliers
+```
 # Formal Data Analysis {#sec-Formal}
 
 ## Fitting the Model {#sec-fm}
