@@ -546,6 +546,9 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
 @fig-dodgedbarplot-genre shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
 
 # Formal Data Analysis {#sec-Formal}
+
+The response variable 'high_rating' is the rating for 1937 films taking the values 1 for 'Rating greater than 7' and 0 for 'Rating less than 7'. Predictors include the properties of films 'year', 'length', 'budget', 'log_votes' and 'genre'. It is assumed that $high\_rating_i \sim \text{Bin}(1, p_i)$ where *p~i~* is the probability of film with 'Rating greater than 7' for the *i*th film. A logistic regression model is fitted.
+
 ## Fitting the Model {#sec-fm}
 
 Baseline category for our binary response high_rating is 0 i.e 'Rating less than 7'
@@ -557,28 +560,29 @@ levels(imdb_data$high_rating)
 
 ### Saturated Model {#sec-sat.model}
 
+A full model with all the continuous independent variables 'year', 'length', 'budget', 'log_votes' and categorical explanatory variable 'genre' is explored:
+
 $$ 
-\ln\left(\frac{p_i}{1-p_i}\right)=\alpha + \beta_1 \cdot \textrm{year}_i+\beta_2 \cdot \textrm{length}_i+\beta_3 \cdot \textrm{budget}_i+\beta_4 \cdot \textrm{log_votes}_i
-+\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(x)+\\
-\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
-\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(x)+
-\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(x)+
-\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(x)+
-\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(x)
+\ln\left(\frac{p_i}{1-p_i}\right)=\alpha + \beta_1 \cdot \textrm{year}_i+\beta_2 \cdot \textrm{length}_i+\beta_3 \cdot \textrm{budget}_i+\beta_4 \cdot \textrm{log\_votes}_i
++\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(i)+\\
+\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(i)+
+\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(i)+
+\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(i)+
+\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(i)+
+\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(i)
 $$
 
 $$\mathbb{I}_{\mbox{genre}}(i)=\left\{
                 \begin{array}{ll}
-                  1 ~~~ \mbox{if genre of} ~ i \mbox{th observation is Genre},\\
+                  1 ~~~ \mbox{if genre of} ~ i \mbox{th observation in genre},\\
                   0 ~~~ \mbox{Otherwise}.\\
                 \end{array}
               \right.\\
-              Genre=\{Animation,Comedy,Documentary,Drama,Romance,Short\}$$
+              genre=\{Animation,Comedy,Documentary,Drama,Romance,Short\}$$
 
 ```{r}
 #| label: tbl-m0_model-Summary
 #| tbl-cap: Summary for Saturated Model
-library(broom)
 m0_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
                  data = imdb_data, family = binomial(link="logit"))
 summary(m0_model)
@@ -616,7 +620,7 @@ In @tbl-deviance each row represents a term (predictor variable) added to the mo
 
 1.  [Deviance]{.underline} : for a GLM model that fits the data well the approximate deviance D is $\chi^2(m-p)$ where *m* is the number of parameters in the saturated model (full model) and *p* is the number of parameters in the model of interest. In the above model, 2463.5-1018.0 is larger than 95th percentile of the $\chi^2(1936-1926)$ . There is no evidence of lack of fit.
 
-    However, for a binary response neither D nor $\chi^2$ provide a useful measure measure of goodness of fit
+    However, for a binary response neither D nor $\chi^2$ may not provide a useful measure measure of goodness of fit
 
 2.  [Hosmer-Lemeshow goodness of fit test]{.underline}: For a model with binary responses,
 
@@ -627,7 +631,6 @@ In @tbl-deviance each row represents a term (predictor variable) added to the mo
 ```{r}
 #Deviance#
 qchisq(df=10, p=0.95) # 18.30704
-
 
 # Hosmer-Lemeshow goodness of fit test
 HLTest = function(obj, g) {
@@ -667,12 +670,10 @@ HLTest = function(obj, g) {
  ), class = 'htest'))
 }
 
-for (i in 5:15) {
-  print(HLTest(m0_model, g = i)$p.value)
-  }
+HLTest(m0_model, g = 6)
 ```
 
-A small p-value suggests that the fitted model is not an adequate model. Conversely, large p-value indicated no lack of it. From the above output there is evidence of lack of fit.
+A large p-value indicates no lack of fit. From the above output there is no evidence of lack of fit.
 
 **Assumptions**
 
@@ -686,7 +687,7 @@ A small p-value suggests that the fitted model is not an adequate model. Conver
 
 5.  No outliers
 
-The first two assumptions are self explanatory and depend on the study design. For assumption 3, the scatterplot justified.
+The first assumption is fulfilled as the the 'rating; has been converted to a binary variable in accordance. For asuumption 2, since the observation belong to independent fils, it is satisfied. For assumption 3, @fig-scatterplot-matrix justifies that there are no strong correlations between the independent variables.
 
 Assumption 4: Check linearity of continuous variables against log odds of the dependent variable
 
@@ -733,25 +734,25 @@ Assumption 5: Checking for outliers
 #| fig-align: center
 #| message: false
 # Cook's Distance
-c0 <- plot(m0_model, which=4, id.n = 10)
+c0 <- plot(m0_model, which=4, id.n = )
 
 ```
 
-Top model has outliers which can be observed in @fig-cook-m0 .This is due to the outliers present in the data set.
+The model has outliers which can be observed in @fig-cook-m0 .This is due to the outliers present in the data set.
 
 ### Model 1 {#sec-m1.model}
 
-start model:following equation referring to a logistic regression model $$ 
+A model with continuous independent variables with 'year', 'length', 'budget' and categorical explanatory variable is explored: $$ 
 \ln\left(\frac{p_i}{1-p_i}\right)=\alpha + \beta_1 \cdot \textrm{year}_i+\beta_2 \cdot \textrm{length}_i+\beta_3 \cdot \textrm{budget}_i
-+\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(x)+\\
-\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
-\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(x)+
-\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(x)+
-\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(x)+
-\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(x)
++\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(i)+\\
+\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(i)+
+\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(i)+
+\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(i)+
+\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(i)+
+\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(i)
 $$ $$\mathbb{I}_{\mbox{genre}}(x)=\left\{
                 \begin{array}{ll}
-                  1 ~~~ \mbox{if genre of} ~ i \mbox{th observation is genre},\\
+                  1 ~~~ \mbox{if genre of} ~ i \mbox{th observation in genre},\\
                   0 ~~~ \mbox{Otherwise}.\\
                 \end{array}
               \right.\\
@@ -795,12 +796,11 @@ From @tbl-m1_model-Summary the following can be observed:
 #Deviance#
 qchisq(df=9, p=0.95) # 16.91898
 
-for (i in 5:25) {
-  print(HLTest(m1_model, g = i)$p.value)
-  }
+#Hosmer-Lemeshow goodness of fit test#
+HLTest(m1_model, g = 6)
 ```
 
-From the above output there is evidence of lack of fit.
+From the above output there is no evidence of lack of fit.
 
 **Assumptions**
 
@@ -814,7 +814,7 @@ From the above output there is evidence of lack of fit.
 
 5.  No outliers
 
-The first two assumptions are self explanatory and depend on the study design. For assumption 3, the scatterplot justified.
+The first assumption is fulfilled as the the 'rating; has been converted to a binary variable in accordance. For assumption 2, since the observation belong to independent films, it is satisfied. For assumption 3, @fig-scatterplot-matrix justifies that there are no strong correlations between the independent variables.
 
 Assumption 4: Check linearity of continuous variables against log odds of the dependent variable
 
@@ -874,9 +874,9 @@ $$
 \beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(i)
 $$
 
-$$\mathbb{I}_{\mbox{genre}}(x)=\left\{
+$$\mathbb{I}_{\mbox{genre}}(i)=\left\{
                 \begin{array}{ll}
-                  1 ~~~ \mbox{if } ~ x \mbox{th observation is genre},\\
+                  1 ~~~ \mbox{if } ~ i \mbox{th observation in genre},\\
                   0 ~~~ \mbox{Otherwise}\\
                 \end{array}
               \right.\\
@@ -922,12 +922,10 @@ From @tbl-m2_model-Summary the following can be observed:
 qchisq(df=9, p=0.95) # 16.91898
 
 # Hosmer-Lemeshow goodness of fit test
-for (i in 5:15) {
-  print(HLTest(m2_model, g = i)$p.value)
-  }
+HLTest(m2_model, g = 6)
 ```
 
-A small p-value suggests that the fitted model is not an adequate model. Conversely, large p-value indicated no lack of it. From the above output there is evidence of lack of fit.
+A large p-value indicates no lack of fit. From the above output there is no evidence of lack of fit.
 
 **Assumptions**
 
@@ -941,7 +939,7 @@ A small p-value suggests that the fitted model is not an adequate model. Conver
 
 5.  No outliers
 
-The first two assumptions are self explanatory and depend on the study design. For assumption 3, the scatterplot justified.
+The first assumption is fulfilled as the the 'rating; has been converted to a binary variable in accordance. For assumption 2, since the observation belong to independent films, it is satisfied. For assumption 3, @fig-scatterplot-matrix justifies that there are no strong correlations between the independent variables.
 
 Assumption 4: Check linearity of continuous variables against log odds of the dependent variable
 
@@ -1173,7 +1171,9 @@ imdb_data <- imdb_data %>%
 
 **Probabilities**
 
-Probabilities added to the data set which have been formulated by using the fitted() function"
+Probabilities added to the data set which have been formulated by using the fitted() function
+
+$p = \frac{\text{odds}}{\text{odds} + 1}$
 
 ```{r}
 imdb_data <- imdb_data %>%
@@ -1191,8 +1191,6 @@ The predicted probabilities of high rating against the films 'length' and 'budge
 plot_model(m2_model, type = "pred", terms =c("length[all]", "budget", "genre"))
 ```
 
-In the plot above it can be seen
-
 ## Model Checking and Diagnostics (#Sec-mcd)
 
 ### Model Selection {#Sec-ms}
@@ -1201,11 +1199,13 @@ In the plot above it can be seen
 
 ```{r}
 # 1. Likelihood Ratio Chi-Squared Statistic Test
-lr_test_1 <- anova(m0_model, m1_model, test = "Chisq") # implies log_votes is not significantly associated with the outcome (p>0.05) therefore m1_model better than m0_model
-lr_test_1
-lr_test_2 <- anova(m1_model, m2_model, test = "Chisq") # p <0.05 
-lr_test_2
+lrt_1 <- anova(m0_model, m1_model, test="Chisq")
+# since p-value >0.05 therefore m1_model better than m0_model but m0_model is better than m2_model
+lrt_2 <- anova(m1_model, m2_model, test="Chisq") # # since p-value < 0.05 therefore m1_model better than m2_model
+lrt_2
 ```
+
+This test suggests that m1_model could the best choice based on Likelihood ration test. However, m0_model has insignificant term 'log_votes' and smallest reduction in residual deviance when adding 'year' and 'log_votes'. A model without 'year' and 'log_votes' would be more suitable.
 
 2.  Residuals
 
@@ -1265,9 +1265,9 @@ model_comparison_table <- all_data %>%
 print(model_comparison_table)
 ```
 
-A comparison of the [Mean Deviance Residual (MDR)]{.underline} all of the models fit the data well, with no significant difference.
+A comparison of the [Mean Deviance Residual (MDR)]{.underline} all of the models fit the data well, with small difference suggesting **m2_model** is a better fit.
 
-[Mean Pearson Residual (MPR)]{.underline} varies slightly among the three models, with m0_model and m1_model having closer mean values and m2_model having the lowest mean value (-0.00991), suggesting that the m2_model may be a slightly better fit than the the other two models.
+[Mean Pearson Residual (MPR)]{.underline} varies slightly among the three models, with m0_model and m1_model having closer mean values and m2_model having the lowest mean value (-0.0099), suggesting that the **m2_model** is a better fit than the the other two models.
 
 The mean value of [Mean Fitted Probabilities]{.underline} (0.332) is same across all models, suggesting that the average prediction probability of a film receiving 'Rating greater than 7' is consistent across models.
 
@@ -1308,7 +1308,7 @@ cat("AUC for m2_model:", auc_m2, "\n")
 
 [Comparison of AUC values]{.underline} shows that all models have very high predictive performance, with AUC values most 0.95, implying that the models work well in distinguishing between 'Rating greater than 7' and 'Rating less than 7' films. m0_model shows the best performance, but the difference with m1_model and m2_model is negligible, suggesting that there is little or no loss in prediction.
 
-[Comparison of ROC curves]{.underline}, it can be observed from the figure that the ROC curves of the three models are very close to each other, almost overlapping, and all three curves are very tightly fitted to the upper left corner, indicating that all three models have good predictive ability This suggests that in terms of the balance between the sensitivity (true rate) and the specificity (false positive rate), these models have similar classification ability. This is also confirmed by the AUC values of the models, with m0_model having the highest AUC (0.9519078 ), but the differences with m1_model (0.9518664) and m2_model (0.9512197 ) are very slight.
+[Comparison of ROC curves]{.underline}, it can be observed from the figure that the ROC curves of the three models are very close to each other, almost overlapping, and all three curves are very tightly fitted to the upper left corner, indicating that all three models have good predictive ability This suggests that in terms of the balance between the sensitivity (true rate) and the specificity (false positive rate), these models have similar classification ability. This is also confirmed by the AUC values of the models, with m0_model having the highest AUC (9,951897), but the differences with m1_model (0.9518471) and m2_model (0.9512016 ) are very slight.
 
 4.  AIC & BIC
 
@@ -1322,7 +1322,7 @@ table_aic <- aic_data %>%
 print(table_aic)
 ```
 
-Based on the AIC criterion for model selection, m1_model (with log_votes removed) provided the best fit to the data (AIC = 1038.067) compared to m0_model with all variables included (AIC = 1039.973). Therefore, m1_model is the preferred model.
+Based on the AIC criterion for model selection, **m1_model** (with log_votes removed) provided the best fit to the data (AIC = 1038.203) compared to m0_model with all variables included (AIC = 1040.110). Therefore, m1_model is the preferred model.
 
 ```{r}
 # 5. BIC
@@ -1337,8 +1337,22 @@ table_bic <- bic_data %>%
 print(table_bic)
 ```
 
-According to the BIC criterion, the m0_model shows the highest BIC value (1101.231), suggesting that this model may not be the most preferred choice. m1_model has a lowest BIC (BIC = 1093.290), suggesting that it is a better choice in a statistical perspective.
+According to the BIC criterion, the m0_model shows the highest BIC value (1101.368), suggesting that this model may not be the most preferred choice. **m2_model** has a lowest BIC (BIC = 1093.426), suggesting that it is a better choice in a statistical perspective.
 
 # Conclusions {#sec-Conc}
 
-m2_model is chosen
+In comparison to the other models, m2_model has the minimum BIC. Since BIC places a stronger penalty on model complexity than AIC for smaller data sets, simpler model is chosen. m2_model also performed slightly better in residual tests. All the parameters of m2_model are also statistically significant.It is also noted that even though m1_model performed better in likelihood ration test and AIC, it is not preferred since it has the variable 'year' which has the smallest reduction in residual deviance when adding to the model.
+
+In summary, it can be observed that 'length', 'budget' and 'genre' are the properties of film that influence the IMDB ratings to be greater than 7 on not.
+
+### Limitations
+
+There are few limitations to the analysis:
+
+-   Sensitivity to outliers
+
+-   Risk of overfitting the data
+
+-   Residuals may not be informative if the response is binary and if n~k~ is small for most covariate patterns
+
+-   The power of the Hosmer-Lemeshow test can be too small to detect lack of fit.
