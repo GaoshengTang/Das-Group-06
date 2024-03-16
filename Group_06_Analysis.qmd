@@ -1192,7 +1192,7 @@ The predicted probabilities of high rating against the films 'length' and 'budge
 plot_model(m2_model, type = "pred", terms =c("length[all]", "budget", "genre"))
 ```
 
-In the plot above it can be seen
+It has been find that the probabilities about rating greater than7 decrease by length in terms of the length of the horizontal coordinate. Besides, we also can see that the green line over the blue line, and the blue line over red one. Therefore, it is a conclusion that the probabilities about greater than7 decrease by budget.
 
 ## Model Checking and Diagnostics (#Sec-mcd)
 
