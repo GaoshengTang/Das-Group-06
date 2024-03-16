@@ -28,6 +28,9 @@ library(moderndive)
 library(MASS)
 library(knitr)
 library(GGally)
+library(sjPlot)
+library(broom)
+library(pROC)
 ```
 
 
