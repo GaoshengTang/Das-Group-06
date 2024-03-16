@@ -546,10 +546,9 @@ ggplot(imdb_data, aes(x = genre, fill = rate)) +
 @fig-dodgedbarplot-genre shows that the number of low rating films is bigger than the number of high rating films in the genre films about Action,Drama,Romance.Besides,the number of low rating films is smaller than the number of high rating films in the genre films about Animation,Documentary,Short. In genre Comedy, the number of films with high ratings is about the same as the number of films with low scores.
 
 # Formal Data Analysis {#sec-Formal}
-
 ## Fitting the Model {#sec-fm}
 
-Baseline category for our binary response high_rating is 0
+Baseline category for our binary response high_rating is 0 i.e 'Rating less than 7'
 
 ```{r}
 levels(imdb_data$high_rating)
@@ -558,228 +557,641 @@ levels(imdb_data$high_rating)
 
 ### Saturated Model {#sec-sat.model}
 
-Include latex equation
-
-```{r}
-#| label: tbl-6
-#| tbl-cap: Summary for Saturated Model
-m0_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
-                 data = imdb_data, family = binomial(link="logit"))
-summary(m0_model)
-
-m0_coefficients <- summary(m0_model)$coefficients
-
-m0_coefficients_df <- as.data.frame(m0_coefficients) # Create a data frame
-
-m0_coefficients_df$row_names <- rownames(m0_coefficients_df)
-
-m0_coefficients_table <- m0_coefficients_df %>%
-  gt(rowname_col = "row_names") %>%
-  fmt_number(decimals=3) %>%
-  tab_header(
-    title = "Summary for Saturated Model"
-  )
-
-# Print the table
-print(m0_coefficients_table)
-
-```
-
-Baseline category for explanatory variable 'genre' is "Action".
-
-**Variable Selection** log_votes has a p-value of 0.7597. This suggests that there this variable should be included in the model.
-
-**Hypothesis Testing** Since log-votes has p-value \> 0.05, it is not statistically significant and does not contribute in explaining the variation in the response variable.
-
-**Analysis of Deviance Table**
-
-```{r}
-d0 <- anova(m0_model) %>%
-  kable()
-```
-
-Each row in the table represents a term (predictor variable) added to the model. It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. A model without 'year' and 'log_votes' could be tried.
-
-**Model is a good fit** The value of the deviance for this model is D = 1018. If the model is a good fit, the deviance should approximately follow the $\chi^2(1936-11)$ = $\chi^2(1926)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1936) minus the parameters in the model (11). The 95th percentile of the $\chi^2(1926)$ distribution is 2029.211. Since, 1018 \< 2029.211, there is no evidence of lack of fit.
-
-```{r}
-nrow(distinct(imdb_data, year, length, budget, log_votes, genre)) # 1936
-qchisq(df=1926, 0.95) # 2029.211
-```
-
-**Assumptions**
-
-Residuals should be normally distributed Independence of observations Linearity of continuous explanatory variables and the log-odds outcome No multicollinearity - explanatory variables should not be highly correlated with each other
-
-```{r}
-autoplot(m0_model)
-```
-
-### Model 1 {#sec-m1.model}
-
-start model:following equation referring to a logistic regression model $$ 
-\ln\left(\frac{p}{1-p}\right)=\alpha + \beta_1 \cdot \textrm{year}+\beta_2 \cdot \textrm{length}+\beta_3 \cdot \textrm{budget}+\beta_4 \cdot \textrm{log_votes}
+$$ 
+\ln\left(\frac{p_i}{1-p_i}\right)=\alpha + \beta_1 \cdot \textrm{year}_i+\beta_2 \cdot \textrm{length}_i+\beta_3 \cdot \textrm{budget}_i+\beta_4 \cdot \textrm{log_votes}_i
 +\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(x)+\\
 \beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
 \beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(x)+
 \beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(x)+
 \beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(x)+
 \beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(x)
-$$ $$\mathbb{I}_{\mbox{Genre}}(x)=\left\{
+$$
+
+$$\mathbb{I}_{\mbox{genre}}(i)=\left\{
                 \begin{array}{ll}
-                  1 ~~~ \mbox{if genre of} ~ x \mbox{th observation is Genre},\\
+                  1 ~~~ \mbox{if genre of} ~ i \mbox{th observation is Genre},\\
                   0 ~~~ \mbox{Otherwise}.\\
                 \end{array}
               \right.\\
-              Genre=\{Animation,Comedy,Documentary,Drama,RomanceShort\}$$
+              Genre=\{Animation,Comedy,Documentary,Drama,Romance,Short\}$$
 
 ```{r}
-m1_model <- glm(high_rating ~ year + length + budget  + genre, 
+#| label: tbl-m0_model-Summary
+#| tbl-cap: Summary for Saturated Model
+library(broom)
+m0_model <- glm(high_rating~ year + length + budget + log_votes + genre, 
                  data = imdb_data, family = binomial(link="logit"))
-summary(m1_model)
-
-m1_coefficients <- summary(m1_model)$coefficients
-
-m1_coefficients_df <- as.data.frame(m1_coefficients) # Create a data frame
-
-m1_coefficients_df$row_names <- rownames(m1_coefficients_df)
-
-m1_coefficients_table <- m1_coefficients_df %>%
-  gt(rowname_col = "row_names") %>%
-  fmt_number(decimals=3) %>%
-  tab_header(
-    title = "Summary for Model 1"
-  )
-
-# Print the table
-print(m1_coefficients_table)
-
+summary(m0_model)
+m0_summary <- tidy(m0_model) # Model summary
+conf_intervals <- confint(m0_model) # 95% Confidence intervals
+m0_summary[, -1] <- round(m0_summary[, -1], 3)
+conf_intervals <- round(conf_intervals, 3) 
+combined_data <- cbind(m0_summary, conf_intervals)
+gt(combined_data) %>%
+  tab_spanner(label = "m0_model Summary")
 ```
 
-**Variable Selection** All the estimates are statistically significant with a p-value \< 0.05. However, looking at residual deviance in table observe when adding the predictor variable "year" reduction in residual deviance is smallest.
+Baseline category for explanatory variable 'genre' is "Action"
 
-**Hypothesis Testing** Since p-values \> 0.05 for all the parameters, the predictors are statistically significant and contributes to explaining the variation in the response variable.
+From @tbl-m0_model-Summary the following can be observed:
 
-**Model is a good fit** The value of the deviance for this model is D = 1018.1. If the model is a good fit, the deviance should approximately follow the $\chi^2(1927-10)$ = $\chi^2(1917)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1927) minus the parameters in the model (10). The 95th percentile of the $\chi^2(1926)$ distribution is 2019.972. Since, 1018.1 \< 2019.972, there is no evidence of lack of fit.
+-   **Variable Selection** log_votes has a p-value of 0.760. This suggests that there this parameter should not be included in the model.
+
+-   **Hypothesis Testing** Since log-votes has p-value \> 0.05, it is not statistically significant and does not contribute in explaining the variation in the response variable.
+
+-   **95% Confidence Interval** The approximate 95% confidence interval of log_votes contains zero, it can be concluded log_votes is not statistically significant.
+
+**Analysis of Deviance Table**
 
 ```{r}
-nrow(distinct(imdb_data, year, length, budget, genre)) # 1927
-
-qchisq(df=1917, 0.95) # 2019.972
+#| label: tbl-deviance
+#| tbl-cap: Analysis of deviance
+d0 <- anova(m0_model) %>%
+  kable()
 ```
+
+In @tbl-deviance each row represents a term (predictor variable) added to the model. It can be observed that largest reduction in residual deviance comes when adding 'genre' and the smallest when adding 'year' and 'log_votes'. A model without 'year' and 'log_votes' could be tried.
+
+**Goodness-of-fit**
+
+1.  [Deviance]{.underline} : for a GLM model that fits the data well the approximate deviance D is $\chi^2(m-p)$ where *m* is the number of parameters in the saturated model (full model) and *p* is the number of parameters in the model of interest. In the above model, 2463.5-1018.0 is larger than 95th percentile of the $\chi^2(1936-1926)$ . There is no evidence of lack of fit.
+
+    However, for a binary response neither D nor $\chi^2$ provide a useful measure measure of goodness of fit
+
+2.  [Hosmer-Lemeshow goodness of fit test]{.underline}: For a model with binary responses,
+
+    H~0~ = the model fits the data well,
+
+    H~1~ = the model does not fit the data well
+
+```{r}
+#Deviance#
+qchisq(df=10, p=0.95) # 18.30704
+
+
+# Hosmer-Lemeshow goodness of fit test
+HLTest = function(obj, g) {
+ # first, check to see if we fed in the right kind of object
+ stopifnot(family(obj)$family == "binomial" && family(obj)$link == "logit")
+ y = obj$model[[1]]
+ trials = rep(1, times = nrow(obj$model))
+ if(any(colnames(obj$model) == "(weights)")) 
+  trials <- obj$model[[ncol(obj$model)]]
+ # the double bracket (above) gets the index of items within an object
+ if (is.factor(y)) 
+  y = as.numeric(y) == 2  # Converts 1-2 factor levels to logical 0/1 values
+ yhat = obj$fitted.values 
+ interval = cut(yhat, quantile(yhat, 0:g/g), include.lowest = TRUE)  # Creates factor with levels 1,2,...,g
+ Y1 <- trials*y
+ Y0 <- trials - Y1
+ Y1hat <- trials*yhat
+ Y0hat <- trials - Y1hat
+ obs = xtabs(formula = cbind(Y0, Y1) ~ interval)
+ expect = xtabs(formula = cbind(Y0hat, Y1hat) ~ interval)
+ if (any(expect < 5))
+  warning("Some expected counts are less than 5. Use smaller number of groups")
+ pear <- (obs - expect)/sqrt(expect)
+ chisq = sum(pear^2)
+ P = 1 - pchisq(chisq, g - 2)
+ # by returning an object of class "htest", the function will perform like the 
+ # built-in hypothesis tests
+ return(structure(list(
+  method = c(paste("Hosmer and Lemeshow goodness-of-fit test with", g, "bins", sep = " ")),
+  data.name = deparse(substitute(obj)),
+  statistic = c(X2 = chisq),
+  parameter = c(df = g-2),
+  p.value = P,
+  pear.resid = pear,
+  expect = expect,
+  observed = obs
+ ), class = 'htest'))
+}
+
+for (i in 5:15) {
+  print(HLTest(m0_model, g = i)$p.value)
+  }
+```
+
+A small p-value suggests that the fitted model is not an adequate model. Conversely, large p-value indicated no lack of it. From the above output there is evidence of lack of fit.
 
 **Assumptions**
 
+1.  The dependent variable is binary
+
+2.  Independence of observations
+
+3.  The independent variable do not correlate too strongly with each other
+
+4.  Linearity of continuous explanatory variables and the log-odds outcome
+
+5.  No outliers
+
+The first two assumptions are self explanatory and depend on the study design. For assumption 3, the scatterplot justified.
+
+Assumption 4: Check linearity of continuous variables against log odds of the dependent variable
+
 ```{r}
-autoplot(m1_model)
+#| label: fig-lin-m0
+#| fig-cap: Checking Linearity for m0_model
+#| fig-width: 4
+#| fig-align: center
+#| message: false
+probabilities_m0 <- predict(m0_model, type="response")
+
+logit_m0 = log(probabilities_m0/(1-probabilities_m0))
+
+m0_1 <-ggplot(imdb_data, aes(logit_m0, year))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+m0_2 <- ggplot(imdb_data, aes(logit_m0, length))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+m0_3 <- ggplot(imdb_data, aes(logit_m0, budget))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+m0_4 <- ggplot(imdb_data, aes(logit_m0, log_votes))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+grid.arrange(m0_1, m0_2, m0_3, m0_4)
 ```
+
+The relationship between continuous variables against log-odds seems to be fairly linear.
+
+Assumption 5: Checking for outliers
+
+```{r}
+#| label: fig-cook-m0
+#| fig-cap: Checking Outliers for m0_model
+#| fig-width: 4
+#| fig-align: center
+#| message: false
+# Cook's Distance
+c0 <- plot(m0_model, which=4, id.n = 10)
+
+```
+
+Top model has outliers which can be observed in @fig-cook-m0 .This is due to the outliers present in the data set.
+
+### Model 1 {#sec-m1.model}
+
+start model:following equation referring to a logistic regression model $$ 
+\ln\left(\frac{p_i}{1-p_i}\right)=\alpha + \beta_1 \cdot \textrm{year}_i+\beta_2 \cdot \textrm{length}_i+\beta_3 \cdot \textrm{budget}_i
++\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(x)+\\
+\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(x)+
+\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(x)+
+\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(x)+
+\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(x)+
+\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(x)
+$$ $$\mathbb{I}_{\mbox{genre}}(x)=\left\{
+                \begin{array}{ll}
+                  1 ~~~ \mbox{if genre of} ~ i \mbox{th observation is genre},\\
+                  0 ~~~ \mbox{Otherwise}.\\
+                \end{array}
+              \right.\\
+              genre=\{Animation,Comedy,Documentary,Drama,Romance,Short\}$$
+
+```{r}
+#| label: tbl-m1_model-Summary
+#| tbl-cap: Summary for m1_model 
+m1_model <- glm(high_rating ~ year + length + budget + genre, 
+                 data = imdb_data, family = binomial(link="logit"))
+summary(m1_model)
+m1_summary <- tidy(m1_model) # Model summary
+conf_intervals <- confint(m1_model) # 95% Confidence intervals
+m1_summary[, -1] <- round(m1_summary[, -1], 3)
+conf_intervals <- round(conf_intervals, 3) 
+combined_data <- cbind(m1_summary, conf_intervals)
+gt(combined_data) %>%
+  tab_spanner(label = "m1_model Summary")
+
+```
+
+From @tbl-m1_model-Summary the following can be observed:
+
+-   **Variable Selection** All the estimates are statistically significant with a p-value \< 0.05.
+
+-   **Hypothesis Testing** Since p-values \> 0.05 for all the parameters, the predictors are statistically significant and contributes to explaining the variation in the response variable.
+
+-   **95% Confidence Interval** The approximate 95% confidence interval for all the parameters do not contain 0, it can be concluded they are statistically significant.
+
+**Goodness-of-fit**
+
+1.  [Deviance]{.underline} : In the above model, 2463.5-1018.1 = 1445.4 is larger than 95th percentile of the $\chi^2(1936-1927)$ = 16.92 . There is no evidence of lack of fit.
+
+2.  [Hosmer-Lemeshow goodness of fit test]{.underline}: For a model with binary responses,
+
+    H~0~ = the model fits the data well,
+
+    H~1~ = the model does not fit the data well
+
+```{r}
+#Deviance#
+qchisq(df=9, p=0.95) # 16.91898
+
+for (i in 5:25) {
+  print(HLTest(m1_model, g = i)$p.value)
+  }
+```
+
+From the above output there is evidence of lack of fit.
+
+**Assumptions**
+
+1.  The dependent variable is binary
+
+2.  Independence of observations
+
+3.  The independent variable do not correlate too strongly with each other
+
+4.  Linearity of continuous explanatory variables and the log-odds outcome
+
+5.  No outliers
+
+The first two assumptions are self explanatory and depend on the study design. For assumption 3, the scatterplot justified.
+
+Assumption 4: Check linearity of continuous variables against log odds of the dependent variable
+
+```{r}
+#| label: fig-lin-m1
+#| fig-cap: Checking Linearity for m1_model
+#| fig-width: 4
+#| fig-align: center
+#| message: false
+probabilities_m1 <- predict(m1_model, type="response")
+
+logit_m1 = log(probabilities_m1/(1-probabilities_m1))
+
+m1_1 <-ggplot(imdb_data, aes(logit_m1, year))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+m1_2 <- ggplot(imdb_data, aes(logit_m1, length))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+m1_3 <- ggplot(imdb_data, aes(logit_m1, budget))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+grid.arrange(m1_1, m1_2, m1_3, ncol=2)
+```
+
+The relationship between continuous variables against log-odds seems to be fairly linear for all the variables in @fig-lin-m1
+
+Assumption 5: Checking for outliers
+
+```{r}
+#| label: fig-cook-m1
+#| fig-cap: Checking Outliers for m1_model 
+#| fig-width: 4 
+#| fig-align: center 
+#| message: false 
+# Cook's Distance
+c1 <- plot(m1_model, which=4, id.n = 10) 
+```
+
+The model has outliers which can be observed in @fig-cook-m1. This is due to the outliers present in the data set.
 
 ### Model 2 {#sec-m2.model}
 
-Insert Latex Equation
+$$ 
+\ln\left(\frac{p_i}{1-p_i}\right)=\alpha + \beta_1 \cdot \textrm{length}_i+\beta_2 \cdot \textrm{budget}_i+
++\beta_{\mbox{Animation}} \cdot\mathbb{I}_{\mbox{Animation}}(i)+\\
+\beta_{\mbox{Comedy}} \cdot \mathbb{I}_{\mbox{Comedy}}(i)+
+\beta_{\mbox{Document}} \cdot \mathbb{I}_{\mbox{Document}}(i)+
+\beta_{\mbox{Drama}} \cdot \mathbb{I}_{\mbox{Drama}}(i)+
+\beta_{\mbox{Romance}} \cdot \mathbb{I}_{\mbox{Romance}}(i)+
+\beta_{\mbox{Short}} \cdot \mathbb{I}_{\mbox{Short}}(i)
+$$
+
+$$\mathbb{I}_{\mbox{genre}}(x)=\left\{
+                \begin{array}{ll}
+                  1 ~~~ \mbox{if } ~ x \mbox{th observation is genre},\\
+                  0 ~~~ \mbox{Otherwise}\\
+                \end{array}
+              \right.\\
+              genre=\{Animation,Comedy,Documentary,Drama,Romance,Short\}$$
 
 ```{r}
 # Remove variables with limited contribution to the model: year and log_votes
+#| label: tbl-m2_model-Summary
+#| tbl-cap: Summary for m2_model 
 m2_model <- glm(high_rating ~ length + budget + genre, 
                  data = imdb_data, family = binomial(link="logit"))
 summary(m2_model)
-
-m2_coefficients <- summary(m2_model)$coefficients
-
-m2_coefficients_df <- as.data.frame(m2_coefficients) # Create a data frame
-
-m2_coefficients_df$row_names <- rownames(m2_coefficients_df)
-
-m2_coefficients_table <- m2_coefficients_df %>%
-  gt(rowname_col = "row_names") %>%
-  fmt_number(decimals=3) %>%
-  tab_header(
-    title = "Summary for Model 2"
-  )
-
-# Print the table
-print(m2_coefficients_table)
+m2_summary <- tidy(m2_model) # Model summary
+conf_intervals <- confint(m2_model) # 95% Confidence intervals
+m2_summary[, -1] <- round(m2_summary[, -1], 3)
+conf_intervals <- round(conf_intervals, 3) 
+combined_data <- cbind(m2_summary, conf_intervals)
+gt(combined_data) %>%
+  tab_spanner(label = "m2_model Summary")
 
 ```
 
-**Variable Selection** All the estimates are statistically significant with a p-value \< 0.05.
+From @tbl-m2_model-Summary the following can be observed:
 
-**Hypothesis Testing** Since p-values \> 0.05 for all the parameters, the predictors are statistically significant and contributes to explaining the variation in the response variable.
+-   **Variable Selection** All the estimates are statistically significant with a p-value \< 0.05. However, it @tbl-deviance computed that the smallest reduction in residual deviance comes from 'year'.
 
-**Model is a good fit** The value of the deviance for this model is D = 1025.2. If the model is a good fit, the deviance should approximately follow the $\chi^2(1928-9)$ = $\chi^2(1919)$ distribution. The degrees of freedom are determined as the number of distinct covariate patterns in the data(1927) minus the parameters in the model (09). The 95th percentile of the $\chi^2(1919)$ distribution is 2022.026. Since, 1025.2 \< 2022.026, there is no evidence of lack of fit.
+-   **Hypothesis Testing** Since p-values \> 0.05 for all the parameters, the predictors are statistically significant and contributes to explaining the variation in the response variable.
+
+-   **95% Confidence Interval** The approximate 95% confidence interval for all the parameters do not contain 0, it can be concluded they are statistically significant.
+
+**Goodness-of-fit**
+
+1.  [Deviance]{.underline} : In the above model, 2463.5-1025.2 = 1438.3 is larger than 95th percentile of the $\chi^2(1936-1928)$ = 16.92 . There is no evidence of lack of fit.
+
+2.  [Hosmer-Lemeshow goodness of fit test]{.underline}: For a model with binary responses,
+
+    H~0~ = the model fits the data well,
+
+    H~1~ = the model does not fit the data well
 
 ```{r}
-nrow(distinct(imdb_data, year, length, budget, genre)) # 1927
-qchisq(df=1919, 0.95) # 2025.105
+#Deviance#
+qchisq(df=9, p=0.95) # 16.91898
+
+# Hosmer-Lemeshow goodness of fit test
+for (i in 5:15) {
+  print(HLTest(m2_model, g = i)$p.value)
+  }
 ```
+
+A small p-value suggests that the fitted model is not an adequate model. Conversely, large p-value indicated no lack of it. From the above output there is evidence of lack of fit.
 
 **Assumptions**
 
+1.  The dependent variable is binary
+
+2.  Independence of observations
+
+3.  The independent variable do not correlate too strongly with each other
+
+4.  Linearity of continuous explanatory variables and the log-odds outcome
+
+5.  No outliers
+
+The first two assumptions are self explanatory and depend on the study design. For assumption 3, the scatterplot justified.
+
+Assumption 4: Check linearity of continuous variables against log odds of the dependent variable
+
 ```{r}
-autoplot(m2_model)
+#| label: fig-lin-m2
+#| fig-cap: Checking Linearity for m2_model
+#| fig-width: 4
+#| fig-align: center
+#| message: false
+probabilities_m2 <- predict(m2_model, type="response")
+
+logit_m2 = log(probabilities_m2/(1-probabilities_m2))
+
+m2_2 <- ggplot(imdb_data, aes(logit_m2, length))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+m2_3 <- ggplot(imdb_data, aes(logit_m2, budget))+
+  geom_point(size=0.5, alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_bw()
+
+grid.arrange(m2_2, m2_3)
 ```
 
-Log-odds & 95% confidence interval for these log-odds
+The relationship between continuous variables against log-odds seems to be fairly linear for all the variables in @fig-lin-m2
+
+Assumption 5: Checking for outliers
+
+```{r}
+#| label: fig-cook-m2
+#| fig-cap: Checking Outliers for m2_model 
+#| fig-width: 4 
+#| fig-align: center 
+#| message: false 
+# Cook's Distance
+c1 <- plot(m2_model, which=4, id.n = 10) 
+```
+
+The model has outliers which can be observed in @fig-cook-m2 . This is due to the outliers present in the data set.
+
+### Log-Odds, Odds and Probabilities {#Sec-lop}
+
+**Log-Odds**
+
+The baseline category for out binary response variables is 'Rating less than 7'. This implies from the logistic regression model are on the log-odds scale for 'Rating greater than 7' in comparison to the baseline'. 'Rating less than 7'.
 
 ```{r}
 m2.coef <- round(coef(m2_model), 3)
+m2.coef
+```
+
+The coefficients are extracted from the @tbl-m2_model-Summary and are found to be:
+
+-   **Intercept (-3.244):** This represents the log-odds of the outcome when all predictor variables are zero.
+
+-   **Length (-0.067):** For every one-unit increase in the "length" variable, holding all other variables constant, the log-odds of the outcome [decrease]{.underline} by 0.067.
+
+-   **Budget (0.554):** For every one-unit increase in the "budget" variable, holding all other variables constant, the log-odds of the outcome increase by 0.554 .
+
+-   **Genre Animation (-0.409):** Observations belonging to the "Animation" genre have log-odds 0.409 [lower]{.underline} than observations belonging to the "Action" genre, holding all other variables constant.
+
+-   **Genre Comedy (3.056):** Observations belonging to the "Comedy" genre have log-odds 3.056 higher than observations belonging to the "Action" genre, holding all other variables constant.
+
+-   **Genre Documentary (5.154):** Observations belonging to the "Documentary" genre have log-odds 5.154 higher than observations belonging to the "Action" genre, holding all other variables constant.
+
+-   **Genre Drama (-1.584):** Observations belonging to the "Drama" genre have log-odds 1.584 [lower]{.underline} than observations belonging to the "Action" genre, holding all other variables constant.
+
+-   **Genre Romance (-2.362):** Observations belonging to the "Romance" genre have log-odds 2.362 [lower]{.underline} than observations belonging to the "Action" genre, holding all other variables constant.
+
+-   **Genre Short (3.428):** Observations belonging to the "Short" genre have log-odds 3.428 higher than observations belonging to the "Action" genre, holding all other variables constant.
+
+The equation are as follows:
+
+For the "Action" genre (reference category):
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i
+$$
+
+For the "Animation" genre:
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i - 0.409
+$$
+
+For the "Comedy" genre:
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i + 3.056
+$$
+
+For the "Documentary" genre:
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i + 5.154
+$$
+
+For the "Drama" genre:
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i - 1.584
+$$
+
+For the "Romance" genre:
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i - 2.362
+$$
+
+For the "Short" genre:
+
+$$
+\ln\left(\frac{p_i}{1-p_i}\right) = -3.244 - 0.067 \times \textrm{length}_i + 0.554 \times \textrm{budget}_i + 3.428
+$$
+
+where *p =* Prob(Rating Greater than 7)
+
+and *1-p =* Prob(Rating less than 7)
+
+95% confidence interval for these log-odds can be found in @tbl-m2_model-Summary
+
+```{r}
 m2.logodds <- confint(m2_model) %>%
   kable()
 ```
 
-Plot of logodds
+Hence the point estimate for the log-odds can be displayed graphically in @fig-logodds with there corresponding 95% confidence interval.
 
 ```{r}
-library(sjPlot)
+#| label: fig-logodds
+#| fig-cap: Plot for Log-Odds 
+#| fig-width: 4 
+#| fig-align: center 
+#| message: false 
 m2_plot_logodds <- plot_model(m2_model, show.values = TRUE, transform = NULL,
-           title = "Log-Odds (Rating greater than 7)", show.p = FALSE)
+           title = "Log-Odds (Rating greater than 7)", show.p = FALSE,digits = 3)+
+  theme_bw()
+m2_plot_logodds
 ```
 
 Adding estimates of the log-odds to our data set
 
 ```{r}
-imdb_data_m2 <- imdb_data %>%
+imdb_data <- imdb_data %>%
   mutate(logodds.m2=predict(m2_model))
 ```
 
-Odds and 95% Confidence Interval for odds
+**Odds**
+
+$$
+\text{Odds}(p_i) = \frac{p_i}{1 - p_i} = \exp\left(\alpha + \beta_1 \cdot \text{length}_i + \beta_2 \cdot \text{budget}_i + \beta_{\text{Animation}} \cdot \mathbb{I}_{\text{Animation}}(i) + \beta_{\text{Comedy}} \cdot \mathbb{I}_{\text{Comedy}}(i) + \beta_{\text{Document}} \cdot \mathbb{I}_{\text{Document}}(i) + \beta_{\text{Drama}} \cdot \mathbb{I}_{\text{Drama}}(i) + \beta_{\text{Romance}} \cdot \mathbb{I}_{\text{Romance}}(i) + \beta_{\text{Short}} \cdot \mathbb{I}_{\text{Short}}(i)\right)
+$$
+
+On the **odds** scale the regression coefficients are given by:
 
 ```{r}
-m2.odds <- m2_model %>%
-  coef() %>%
-  exp() 
-
-m2_log_odds_interval <- confint(m2_model)
-m2_odds_interval <- exp(m2_log_odds_interval) %>%
-  kable()
+#| label: tbl-odds-Summary
+#| tbl-cap: Odds Ratios for m2_model
+gt(
+  coef(m2_model) %>% 
+    exp() %>% 
+    round(3) %>% 
+    as.data.frame() %>%
+    rename("Odds Ratio" = 1) %>%
+    rownames_to_column(var = "Variable")
+) %>%
+  tab_header(
+    title = "Odds Ratios for m2_model"
+  )
 ```
 
-Plot of odds
+On the odds scale,
+
+-   The intercept coefficient (0.039) represents the odds of the film being in the "high_rating" category when all predictor variables are zero. Given this is not viable, the intercept value is very close to zero.
+
+-   For each one unit increase in "length", the odds of the film being in the "high_rating" category decrease by a factor of approximately 0.935.
+
+-   For each one unit increase in "budget", the odds of the film being in the "high_rating" category increase by a factor of approximately 1.740.
+
+-   For each film belonging to "Animation" genre, the odds of the film being in the "high_rating" category approximately decrease by the factor 0.664 times the odds of the reference category ("Action").
+
+-   For each film belonging to "Comedy" genre, theodds of the film being in the "high_rating" category approximately increase by the factor of 21.234 the odds of the reference category.
+
+-   For each film belonging to "Documentary" genre, the odds of the film being in the "high_rating" category approximately increase by the factor of 173.181 the odds of the reference category.
+
+-   For each film belonging to "Drama" genre odds, the odds of the film being in the "high_rating" category approximately decrease by the factor of 0.205 the odds of the reference category.
+
+-   For each film belonging to "Romance" genre, the odds of the film being in the "high_rating" category approximately decrease by the factor of 0.094 the odds of the reference category.
+
+-   For each film belonging to "Short" genre, the odds of the film being in the "high_rating" category approximately increase by the factor of 30.816 the odds of the reference category.
+
+The 95% confidence interval for the odds can be obtained by applying exponential to the log odds interval:
 
 ```{r}
-m2_plot_odds <-plot_model(m2_model, show.values = TRUE, axis.lim = c(1,1.5),
-           title = "Odds", show.p = FALSE)
+#| label: tbl-odds-CI
+#| tbl-cap: Odds Ratios for m2_model
+
+m2_log_odds_interval <- confint(m2_model)
+
+m2_odds_interval <- m2_log_odds_interval %>% 
+  exp() %>% 
+  as.data.frame() %>% 
+  round(3) %>% 
+  gt() %>% 
+  tab_header(title = "Odds Ratio Confidence Intervals")
+```
+
+Hence the point estimate for the log-odds can be displayed graphically in @fig-odds with there corresponding 95% confidence interval.
+
+```{r}
+#| label: fig-odds
+#| fig-cap: Plot for Odds 
+#| fig-width: 4 
+#| fig-align: center 
+#| message: false 
+m2_plot_odds <-plot_model(m2_model, show.values = TRUE,title = "Odds")+
+  theme_bw()
+m2_plot_odds
 ```
 
 Adding the estimates of the odds to our data set
 
 ```{r}
-imdb_data_m2 <- imdb_data_m2 %>%
+imdb_data <- imdb_data %>%
   mutate(odds.m2=exp(logodds.m2))
 ```
 
-Probabilities add the probabilities to our data, which is done using the fitted() function:
+**Probabilities**
+
+Probabilities added to the data set which have been formulated by using the fitted() function"
 
 ```{r}
-imdb_data_m2 <- imdb_data %>%
+imdb_data <- imdb_data %>%
   mutate(probs.m2=fitted(m2_model))
 ```
 
-Plot the Probability being Rating greater than 7
+The predicted probabilities of high rating against the films 'length' and 'budget' by the films 'genre' is shown in @fig-probabilities-plot . The plot also shows pointwise confidence intervals for the predicted probabilities.
 
 ```{r}
-plot_model(m2_model, type = "pred", terms = c("length", "budget", "genre"), show.values = TRUE)
+#| label: fig-probabilities-plot
+#| fig-cap: Plot for Predicted Probabilties 
+#| fig-width: 4 
+#| fig-align: center 
+#| message: false 
+plot_model(m2_model, type = "pred", terms =c("length[all]", "budget", "genre"))
 ```
+
+In the plot above it can be seen
 
 ## Model Checking and Diagnostics (#Sec-mcd)
 
@@ -789,8 +1201,10 @@ plot_model(m2_model, type = "pred", terms = c("length", "budget", "genre"), show
 
 ```{r}
 # 1. Likelihood Ratio Chi-Squared Statistic Test
-lr_test_m1 <- anova(m0_model, m1_model, test = "Chisq") # implies log_votes is not significantly associated with the outcome (p>0.05) therefore m1_model better than m0_model
-lr_test_m2 <- anova(m0_model, m2_model, test = "Chisq") # p <0.05 
+lr_test_1 <- anova(m0_model, m1_model, test = "Chisq") # implies log_votes is not significantly associated with the outcome (p>0.05) therefore m1_model better than m0_model
+lr_test_1
+lr_test_2 <- anova(m1_model, m2_model, test = "Chisq") # p <0.05 
+lr_test_2
 ```
 
 2.  Residuals
@@ -926,3 +1340,5 @@ print(table_bic)
 According to the BIC criterion, the m0_model shows the highest BIC value (1101.231), suggesting that this model may not be the most preferred choice. m1_model has a lowest BIC (BIC = 1093.290), suggesting that it is a better choice in a statistical perspective.
 
 # Conclusions {#sec-Conc}
+
+m2_model is chosen
