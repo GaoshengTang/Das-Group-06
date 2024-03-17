@@ -684,10 +684,10 @@ A full model with all the continuous independent
 variables 'year', 'length', 'budget', 'log_votes' and
 categorical explanatory variable 'genre' is explored:
 
-$$\begin{aligned}\ln\left(\frac{p_i}{1-p_i}\right) &= \alpha + \beta_1 \cdot \text{year}_i + \beta_2 \cdot \text{length}_i + \beta_3 \cdot \text{budget}_i \\&\quad + \beta_{\text{Animation}} \cdot \mathbb{I}_{\text{Animation}}(i) + \beta_{\text{Comedy}} \cdot \mathbb{I}_{\text{Comedy}}(i) \\&\quad + \beta_{\text{Document}} \cdot \mathbb{I}_{\text{Document}}(i) + \beta_{\text{Drama}} \cdot \mathbb{I}_{\text{Drama}}(i) \\&\quad + \beta_{\text{Romance}} \cdot \mathbb{I}_{\text{Romance}}(i) + \beta_{\text{Short}} \cdot \mathbb{I}_{\text{Short}}(i)\end{aligned}$$
+$$\begin{aligned}\ln\left(\frac{p_i}{1-p_i}\right) &= \alpha + \beta_1 \cdot \textrm{year}_i + \beta_2 \cdot \textrm{length}_i + \beta_3 \cdot \textrm{budget}_i  + \beta_4 \cdot \textrm{log_votes}_i \\&\quad + \beta_{\textrm{Animation}} \cdot \mathbb{I}_{\textrm{Animation}}(i) + \beta_{\textrm{Comedy}} \cdot \mathbb{I}_{\textrm{Comedy}}(i) \\&\quad + \beta_{\textrm{Document}} \cdot \mathbb{I}_{\textrm{Document}}(i) + \beta_{\textrm{Drama}} \cdot \mathbb{I}_{\textrm{Drama}}(i) \\&\quad + \beta_{\textrm{Romance}} \cdot \mathbb{I}_{\textrm{Romance}}(i) + \beta_{\textrm{Short}} \cdot \mathbb{I}_{\textrm{Short}}(i)\end{aligned}$$
 
 $$\mathbb{I}_{\textrm{genre}}(i) = \begin{cases}
-1 & \textrm{if genre of } i\textrm{th observation is in genre}, \\
+1 & \textrm{if } i\textrm{th observation is in genre}, \\
 0 & \textrm{otherwise}.
 \end{cases}$$
 
@@ -896,7 +896,7 @@ variable is explored:
 $$\begin{aligned}\ln\left(\frac{p_i}{1-p_i}\right) &= \alpha + \beta_1 \cdot \textrm{year}_i + \beta_2 \cdot \textrm{length}_i + \beta_3 \cdot \textrm{budget}_i \\&\quad + \beta_{\textrm{Animation}} \cdot \mathbb{I}_{\textrm{Animation}}(i) + \beta_{\textrm{Comedy}} \cdot \mathbb{I}_{\textrm{Comedy}}(i) \\&\quad + \beta_{\textrm{Document}} \cdot \mathbb{I}_{\textrm{Document}}(i) + \beta_{\textrm{Drama}} \cdot \mathbb{I}_{\textrm{Drama}}(i) \\&\quad + \beta_{\textrm{Romance}} \cdot \mathbb{I}_{\textrm{Romance}}(i) + \beta_{\textrm{Short}} \cdot \mathbb{I}_{\textrm{Short}}(i)\end{aligned}$$
 
 $$\mathbb{I}_{\textrm{genre}}(i) = \begin{cases}
-1 & \textrm{if genre of } i\textrm{th observation is in genre}, \\
+1 & \textrm{if } i\textrm{th observation is in genre}, \\
 0 & \textrm{otherwise}.
 \end{cases}$$
 
@@ -1291,10 +1291,15 @@ imdb_data <- imdb_data %>%
 
 **Odds**
 
-$$\text{Odds}(p_i) = \frac{p_i}{1 - p_i} = \exp\left(\alpha + \beta_1 \cdot \text{length}_i + \beta_2 \cdot \text{budget}_i + \right. \\
-\quad + \beta_{\text{Animation}} \cdot \mathbb{I}_{\text{Animation}}(i) + \beta_{\text{Comedy}} \cdot \mathbb{I}_{\text{Comedy}}(i) 
-\quad + \left. \beta_{\text{Document}} \cdot \mathbb{I}_{\text{Document}}(i) + \beta_{\text{Drama}} \cdot \mathbb{I}_{\text{Drama}}(i) + \right. \\
-\quad + \left. \beta_{\text{Romance}} \cdot \mathbb{I}_{\text{Romance}}(i) + \beta_{\text{Short}} \cdot \mathbb{I}_{\text{Short}}(i)\right)$$
+$$\begin{aligned}
+\text{Odds}(p_i) &= \frac{p_i}{1 - p_i} \\
+&= \exp\left(\alpha + \beta_1 \cdot \text{length}_i + \beta_2 \cdot \text{budget}_i \right. \\
+&\quad + \beta_{\text{Animation}} \cdot \mathbb{I}_{\text{Animation}}(i) + \beta_{\text{Comedy}} \cdot \mathbb{I}_{\text{Comedy}}(i) \\
+&\quad + \beta_{\text{Document}} \cdot \mathbb{I}_{\text{Document}}(i) + \beta_{\text{Drama}} \cdot \mathbb{I}_{\text{Drama}}(i) \\
+&\quad + \left. \beta_{\text{Romance}} \cdot \mathbb{I}_{\text{Romance}}(i) + \beta_{\text{Short}} \cdot \mathbb{I}_{\text{Short}}(i)\right)
+\end{aligned}$$
+
+
 
 On the **odds** scale the regression coefficients are
 given by:
