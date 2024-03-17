@@ -1655,6 +1655,25 @@ bic_data <- data.frame(Model = c("m0_model", "m1_model", "m2_model"),
                        bic_values)
 bic_data %>%
   gt() 
+
+auc_values <- c(auc_m0, auc_m1, auc_m2)
+metrics_data <- data.frame(
+  Model = c("m0_model", "m1_model", "m2_model"),
+  AUC = auc_values,
+  AIC = aic_values$aic,  
+  BIC = bic_values$bic   
+)
+metrics_table <- metrics_data %>%
+  gt() %>%
+  tab_header(title = "Model Performance Metrics") %>%
+  cols_label(
+    AUC = "AUC Value",
+    AIC = "AIC Value",
+    BIC = "BIC Value"
+  )
+print(metrics_table) #creat "Model AIC BIC AUC compare" table
+
+
 ```
 
 According to the BIC criterion, the m0_model shows the
