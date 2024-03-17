@@ -1431,8 +1431,28 @@ m2_p2 <- plot_model(m2_model, type = "pred", terms =c("budget", "genre"))+
   theme_bw()
 grid.arrange(m2_p1, m2_p2)
 ```
-
 \clearpage
+The @fig-probabilities-plot shows that the probability
+of a film to have 'Rating greater than 7' increases
+with the decrease in length of the film and increases
+with the increase in budget of the film for all the
+genres.
+
+```{r}
+#Exporting second data set to excel file#
+write.csv(imdb_data, file = "Group_06_Data.csv") 
+```
+
+Let's have a look at the first five rows of the new
+data frame.
+
+```{r}
+#| label: tbl-dataset-final
+#| tbl-cap: Glimpse of the first five rows in the IMDB data set with log-odds, odds and probabilities
+imdb_data |>
+  slice_head(n=5) |>
+  gt()
+```
 
 ## Model Checking and Diagnostics (#Sec-mcd)
 
