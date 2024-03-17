@@ -264,7 +264,7 @@ ggpairs(imdb_data[, c("rating","year", "budget",  "length", "votes")], title = "
 
 The @fig-scatterplot-matrix shows weak correlation
 between the variables. 'length' shows not so strong
-negative correlation with 'rating.
+negative correlation with 'rating'.
 
 ## Visualization {#sec-viz}
 
@@ -684,10 +684,10 @@ A full model with all the continuous independent
 variables 'year', 'length', 'budget', 'log_votes' and
 categorical explanatory variable 'genre' is explored:
 
-$$\begin{aligned}\ln\left(\frac{p_i}{1-p_i}\right) &= \alpha + \beta_1 \cdot \textrm{year}_i + \beta_2 \cdot \textrm{length}_i + \beta_3 \cdot \textrm{budget}_i  + \beta_4 \cdot \textrm{log_votes}_i \\&\quad + \beta_{\textrm{Animation}} \cdot \mathbb{I}_{\textrm{Animation}}(i) + \beta_{\textrm{Comedy}} \cdot \mathbb{I}_{\textrm{Comedy}}(i) \\&\quad + \beta_{\textrm{Document}} \cdot \mathbb{I}_{\textrm{Document}}(i) + \beta_{\textrm{Drama}} \cdot \mathbb{I}_{\textrm{Drama}}(i) \\&\quad + \beta_{\textrm{Romance}} \cdot \mathbb{I}_{\textrm{Romance}}(i) + \beta_{\textrm{Short}} \cdot \mathbb{I}_{\textrm{Short}}(i)\end{aligned}$$
+$$\begin{aligned}\ln\left(\frac{p_i}{1-p_i}\right) &= \alpha + \beta_1 \cdot \textrm{year}_i + \beta_2 \cdot \textrm{length}_i + \beta_3 \cdot \textrm{budget}_i  + \beta_4 \cdot \textrm{log\_votes}_i \\&\quad + \beta_{\textrm{Animation}} \cdot \mathbb{I}_{\textrm{Animation}}(i) + \beta_{\textrm{Comedy}} \cdot \mathbb{I}_{\textrm{Comedy}}(i) \\&\quad + \beta_{\textrm{Document}} \cdot \mathbb{I}_{\textrm{Document}}(i) + \beta_{\textrm{Drama}} \cdot \mathbb{I}_{\textrm{Drama}}(i) \\&\quad + \beta_{\textrm{Romance}} \cdot \mathbb{I}_{\textrm{Romance}}(i) + \beta_{\textrm{Short}} \cdot \mathbb{I}_{\textrm{Short}}(i)\end{aligned}$$
 
 $$\mathbb{I}_{\textrm{genre}}(i) = \begin{cases}
-1 & \textrm{if } i\textrm{th observation is in genre}, \\
+1 & \textrm{if genre of } i\textrm{th observation is in genre}, \\
 0 & \textrm{otherwise}.
 \end{cases}$$
 
@@ -896,7 +896,7 @@ variable is explored:
 $$\begin{aligned}\ln\left(\frac{p_i}{1-p_i}\right) &= \alpha + \beta_1 \cdot \textrm{year}_i + \beta_2 \cdot \textrm{length}_i + \beta_3 \cdot \textrm{budget}_i \\&\quad + \beta_{\textrm{Animation}} \cdot \mathbb{I}_{\textrm{Animation}}(i) + \beta_{\textrm{Comedy}} \cdot \mathbb{I}_{\textrm{Comedy}}(i) \\&\quad + \beta_{\textrm{Document}} \cdot \mathbb{I}_{\textrm{Document}}(i) + \beta_{\textrm{Drama}} \cdot \mathbb{I}_{\textrm{Drama}}(i) \\&\quad + \beta_{\textrm{Romance}} \cdot \mathbb{I}_{\textrm{Romance}}(i) + \beta_{\textrm{Short}} \cdot \mathbb{I}_{\textrm{Short}}(i)\end{aligned}$$
 
 $$\mathbb{I}_{\textrm{genre}}(i) = \begin{cases}
-1 & \textrm{if } i\textrm{th observation is in genre}, \\
+1 & \textrm{if genre of } i\textrm{th observation is in genre}, \\
 0 & \textrm{otherwise}.
 \end{cases}$$
 
@@ -924,7 +924,7 @@ observed:
 -   **Variable Selection** All the estimates are
     statistically significant with a p-value \< 0.05.
 
--   **Hypothesis Testing** Since p-values \> 0.05 for
+-   **Hypothesis Testing** Since p-values \< 0.05 for
     all the parameters, the predictors are
     statistically significant and contributes to
     explaining the variation in the response variable.
@@ -1058,7 +1058,7 @@ observed:
     However, it @tbl-dev computed that the smallest
     reduction in residual deviance comes from 'year'.
 
--   **Hypothesis Testing** Since p-values \> 0.05 for
+-   **Hypothesis Testing** Since p-values \< 0.05 for
     all the parameters, the predictors are
     statistically significant and contributes to
     explaining the variation in the response variable.
@@ -1299,8 +1299,6 @@ $$\begin{aligned}
 &\quad + \left. \beta_{\text{Romance}} \cdot \mathbb{I}_{\text{Romance}}(i) + \beta_{\text{Short}} \cdot \mathbb{I}_{\text{Short}}(i)\right)
 \end{aligned}$$
 
-
-
 On the **odds** scale the regression coefficients are
 given by:
 
@@ -1370,7 +1368,7 @@ interval:
 
 ```{r}
 #| label: tbl-odds-CI
-#| tbl-cap: Odds Ratios for m2_model
+#| tbl-cap: Odds Ratios CI for m2_model
 m2_log_odds_interval <- confint(m2_model)
 m2_odds_interval <- m2_log_odds_interval %>% 
   exp() %>% 
@@ -1436,28 +1434,12 @@ m2_p2 <- plot_model(m2_model, type = "pred", terms =c("budget", "genre"))+
   theme_bw()
 grid.arrange(m2_p1, m2_p2)
 ```
-\clearpage
+
 The @fig-probabilities-plot shows that the probability
 of a film to have 'Rating greater than 7' increases
 with the decrease in length of the film and increases
 with the increase in budget of the film for all the
-genres.
-
-```{r}
-#Exporting second data set to excel file#
-write.csv(imdb_data, file = "Group_06_Data.csv") 
-```
-
-Let's have a look at the first five rows of the new
-data frame.
-
-```{r}
-#| label: tbl-dataset-final
-#| tbl-cap: Glimpse of the first five rows in the IMDB data set with log-odds, odds and probabilities
-imdb_data |>
-  slice_head(n=5) |>
-  gt()
-```
+genres. 
 
 ## Model Checking and Diagnostics (#Sec-mcd)
 
@@ -1466,11 +1448,11 @@ imdb_data |>
 1.  Likelihood Ratio Chi-Squared Statistic Test
 
 ```{r}
-#| echo: true
-# 1. Likelihood Ratio Chi-Squared Statistic Test
-lrt_1 <- anova(m0_model, m1_model, test="Chisq")
-# since p-value >0.05 therefore m1_model better than m0_model but m0_model is better than m2_model
-lrt_2 <- anova(m1_model, m2_model, test="Chisq") # # since p-value < 0.05 therefore m1_model better than m2_model
+#| label: tbl-LRT
+#| tbl-cap: Likelihood Ratio Chi-Squared Test
+lrt <- anova(m0_model, m1_model, m2_model, test = "Chisq") 
+lrt %>%
+  gt()
 ```
 
 This test suggests that m1_model could the best choice
@@ -1666,21 +1648,30 @@ perspective.
 
 # Conclusions {#sec-Conc}
 
-In comparison to the other models, m2_model has the
+In summary, after comparing the GLM regression results
+and residual plots, we find that the GLM model
+**high_rating \~ length + budget + genre** is the most
+appropriate. This model effectively captures the
+relationship between the dependent and independent
+variables . The saturated model exhibit notable flaws,
+such as p-values above the 5% confidence level and
+confidence intervals containing zero.
+
+In comparison to the other models, this model has the
 minimum BIC. Since BIC places a stronger penalty on
 model complexity than AIC for smaller data sets,
-simpler model is chosen. m2_model also performed
+simpler model is chosen. This model also performed
 slightly better in residual tests. All the parameters
-of m2_model are also statistically significant.It is
+of the model are also statistically significant.It is
 also noted that even though m1_model performed better
 in likelihood ration test and AIC, it is not preferred
 since it has the variable 'year' which has the smallest
 reduction in residual deviance when adding to the
 model.
 
-In summary, it can be observed that 'length', 'budget'
-and 'genre' are the properties of film that influence
-the IMDB ratings to be greater than 7 on not.
+In conclusion, it can be observed that 'length',
+'budget' and 'genre' are the properties of film that
+influence the IMDB ratings to be greater than 7 on not.
 
 ### Limitations
 
